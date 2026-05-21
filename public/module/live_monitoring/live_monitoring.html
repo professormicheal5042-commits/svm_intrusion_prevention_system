@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Live Monitoring | SmartGuard IPS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="live_monitoring.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="../../js/api.js"></script>
+</head>
+<body>
+<!-- iframe detection: hide own sidebar when embedded in dashboard shell -->
+<script>
+(function(){
+  if(window.self !== window.top){
+    document.addEventListener('DOMContentLoaded',function(){
+      var sb=document.querySelector('.sidebar');
+      var main=document.querySelector('.main');
+      if(sb) sb.style.display='none';
+      if(main){ main.style.marginLeft='0'; }
+    });
+  }
+})();
+</script>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <a href="../../index.html" class="sb-logo">
+    <div class="sb-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div>
+      <div class="sb-logo-text">SmartGuard IPS</div>
+      <div class="sb-logo-sub">SVM Intrusion Prevention</div>
+    </div>
+  </a>
+  <nav class="sb-nav">
+    <div class="sb-section">Main</div>
+    <a href="../dashboard/index.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="#" class="sb-link active">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Live Monitoring
+    </a>
+    <a href="../upload/upload.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload &amp; Analyze
+    </a>
+    <div class="sb-section">Analysis</div>
+    <a href="../evaluation/index.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Model Evaluation
+    </a>
+    <a href="../report/report.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Reports &amp; Logs
+    </a>
+    <div class="sb-section">Info</div>
+    <a href="../about/index.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      About
+    </a>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">AD</div>
+      <div>
+        <div class="sb-user-name">Administrator</div>
+        <div class="sb-user-role">Network Admin</div>
+      </div>
+      <button class="logout-btn" title="Sign out" onclick="window.location.href='../auth/login.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h2>Live Monitoring</h2>
+      <p>Real-time network traffic analysis</p>
+    </div>
+    <div class="topbar-right">
+      <div class="stat-pill" id="pps-display">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <span id="pps-val">0</span> pkt/s
+      </div>
+      <button class="btn-start" id="toggle-btn" onclick="toggleMonitoring()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start Monitoring
+      </button>
+      <button class="menu-btn" id="menu-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ALERT BANNER -->
+    <div class="alert-banner" id="alert-banner" style="display:none">
+      <div class="alert-inner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="alert-text">Attack detected!</span>
+      </div>
+      <button onclick="document.getElementById('alert-banner').style.display='none'">✕</button>
+    </div>
+
+    <!-- SPEED GRAPH -->
+    <div class="graph-card">
+      <div class="graph-header">
+        <span class="section-title">Traffic Speed (packets/sec)</span>
+        <div class="status-badge" id="monitor-status">
+          <div class="status-dot idle"></div>
+          <span>Idle</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="speedChart"></canvas></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="section-title" style="margin-bottom:.8rem">Packet Log</div>
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <span id="row-count" class="row-count">0 packets captured</span>
+        <button class="btn-clear" onclick="clearTable()">Clear Log</button>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Source IP</th>
+              <th>Dest IP</th>
+              <th>Protocol</th>
+              <th>Prediction</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="packet-table">
+            <!-- Dynamic rows will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="table-empty" id="table-empty" style="display:flex">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;stroke:#333;margin-bottom:.8rem"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <p>Click <strong>Start Monitoring</strong> to begin capturing packets</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ALERT TOAST CONTAINER -->
+<div id="toast-container" style="position:fixed;top:5rem;right:1.5rem;z-index:200;display:flex;flex-direction:column;gap:.6rem;pointer-events:none"></div>
+
+<script>
+// ── Uses SmartGuardAPI from ../../js/api.js ───────────────────────────────────
+
+// ── Sidebar mobile toggle ─────────────────────────────────────────────────────
+document.getElementById('menu-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+document.addEventListener('click',e=>{
+  const sb=document.getElementById('sidebar');
+  if(!sb.contains(e.target)&&!document.getElementById('menu-btn').contains(e.target)) sb.classList.remove('open');
+});
+
+// ── Speed chart ───────────────────────────────────────────────────────────────
+const labels = Array(30).fill('');
+const speedData = Array(30).fill(0);
+const speedChart = new Chart(document.getElementById('speedChart'),{
+  type:'line',
+  data:{
+    labels,
+    datasets:[{
+      data:speedData,
+      borderColor:'rgba(255,255,255,.6)',
+      backgroundColor:'rgba(255,255,255,.04)',
+      borderWidth:1.5,fill:true,tension:.4,
+      pointRadius:0,pointHoverRadius:3
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    animation:{duration:300},
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{display:false},
+      y:{
+        min:0,
+        grid:{color:'rgba(255,255,255,.05)'},
+        ticks:{color:'#555',font:{size:10}}
+      }
+    }
+  }
+});
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let monitoring = false;
+let pollInterval = null;
+let rowCount = 0;
+
+// ── Toast helper ──────────────────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(t);
+  t.style.pointerEvents='auto';
+  setTimeout(()=>{ t.classList.add('hide'); setTimeout(()=>t.remove(),400); },3500);
+}
+
+// ── Render rows from API response ─────────────────────────────────────────────
+function addApiRows(packets) {
+  const tbody = document.getElementById('packet-table');
+  document.getElementById('table-empty').style.display = 'none';
+
+  let attackCount = 0;
+  packets.forEach(r => {
+    const isAttack = r.prediction !== 'Normal';
+    if (isAttack) attackCount++;
+
+    const predCls  = isAttack ? 'attack' : 'normal';
+    const actCls   = r.action === 'Blocked' ? 'blocked' : 'allowed';
+    const t = new Date(r.timestamp).toLocaleTimeString();
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="mono">${t}</td>
+      <td class="mono">${r.source_ip}</td>
+      <td class="mono">${r.dest_ip}</td>
+      <td>${r.protocol}</td>
+      <td><span class="badge ${predCls}">${r.prediction}</span></td>
+      <td><span class="badge ${actCls}">${r.action}</span></td>`;
+    tr.classList.add('row-new');
+    tbody.insertBefore(tr, tbody.firstChild);
+
+    if (isAttack) {
+      const banner = document.getElementById('alert-banner');
+      document.getElementById('alert-text').textContent =
+        `⚠ ${r.prediction} detected from ${r.source_ip} — connection ${r.action.toLowerCase()}`;
+      banner.style.display = 'flex';
+      showToast(`${r.prediction} from ${r.source_ip}`);
+    }
+  });
+
+  // Keep max 100 rows
+  while (tbody.rows.length > 100) tbody.deleteRow(tbody.rows.length - 1);
+
+  rowCount += packets.length;
+  document.getElementById('row-count').textContent = `${rowCount} packets captured`;
+
+  // Update speed chart with packet count as proxy
+  speedData.push(packets.length * 4);
+  speedData.shift();
+  speedChart.data.datasets[0].data = [...speedData];
+  speedChart.update('none');
+  document.getElementById('pps-val').textContent = packets.length * 4;
+}
+
+// ── Poll /api/live-traffic ────────────────────────────────────────────────────
+async function pollLiveTraffic() {
+  try {
+    const json = await SmartGuardAPI.fetchLiveTraffic();
+    if (json.data && json.data.length) addApiRows(json.data);
+  } catch(err) {
+    console.warn('Live traffic poll failed:', err.message);
+    // Silently continue polling — no crash
+  }
+}
+
+// ── Toggle monitoring ─────────────────────────────────────────────────────────
+function toggleMonitoring(){
+  monitoring = !monitoring;
+  const btn   = document.getElementById('toggle-btn');
+  const badge = document.getElementById('monitor-status');
+
+  if (monitoring) {
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop Monitoring`;
+    btn.classList.add('btn-stop');
+    badge.innerHTML = `<div class="status-dot live"></div><span>Live</span>`;
+
+    // First poll immediately, then every 3 seconds
+    pollLiveTraffic();
+    pollInterval = setInterval(pollLiveTraffic, 3000);
+  } else {
+    clearInterval(pollInterval);
+    pollInterval = null;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polygon points="5 3 19 12 5 21 5 3"/></svg> Start Monitoring`;
+    btn.classList.remove('btn-stop');
+    badge.innerHTML = `<div class="status-dot idle"></div><span>Paused</span>`;
+  }
+}
+
+// ── Clear table ───────────────────────────────────────────────────────────────
+function clearTable(){
+  document.getElementById('packet-table').innerHTML = '';
+  rowCount = 0;
+  document.getElementById('row-count').textContent = '0 packets captured';
+  document.getElementById('table-empty').style.display = 'flex';
+  document.getElementById('alert-banner').style.display = 'none';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+SMARTGUARD IPS — SVM INTRUSION PREVENTION SYSTEM
+Project brief for examiner / presentation
+================================================
+
+1. WHAT THE PROJECT IS
+----------------------
+SmartGuard IPS is a web-based Intrusion Prevention System (IPS) that uses a Support Vector Machine (SVM) to classify network traffic as Normal or Malicious. Users can upload traffic data (CSV or PCAP), view live-style monitoring, inspect reports, and see evaluation metrics on a dashboard.
+
+The system is split into three layers:
+  • Frontend — static website (HTML, CSS, JavaScript)
+  • Backend API — Python (FastAPI) with the trained SVM model
+  • Database & authentication — Supabase (PostgreSQL + Auth)
+
+
+2. FRONTEND (STATIC WEBSITE)
+----------------------------
+Type: Multi-page static website (no React/Vue build step). Files live in the `public/` folder.
+
+Technologies:
+  • HTML5 — structure for landing page, auth, dashboard, upload, live monitoring, reports, and evaluation pages
+  • CSS — custom “dark professional” cybersecurity theme (Inter + JetBrains Mono fonts, grid backgrounds, cards, responsive layout). Styling is written in-page or in module-specific `.css` files (e.g. upload.css, report.css)
+  • JavaScript (vanilla) — page logic, form handling, polling, and API calls
+  • Chart.js (CDN) — pie and bar charts on the dashboard for traffic distribution and attack types
+  • Supabase JavaScript client (CDN) — user registration, login, OTP/email verification, and session handling on auth pages
+
+Central API client: `public/js/api.js` exposes `SmartGuardAPI` (fetchStats, fetchLiveTraffic, fetchReports, uploadFile, saveResults, ping). All dashboard pages call the remote Python API through this file.
+
+User session: after login, user details (including `user_id`) are stored in `sessionStorage` and sent with API requests where needed.
+
+Main UI modules:
+  • `public/index.html` — marketing / landing page
+  • `public/module/auth/` — login, register, OTP verification, auth callback
+  • `public/module/dashboard/` — home dashboard with metrics and charts
+  • `public/module/upload/` — file upload and results table
+  • `public/module/live_monitoring/` — simulated live traffic view
+  • `public/module/report/` — historical logs table
+  • `public/module/evaluation/` — model performance metrics display
+
+Note: Project planning documents mention Bootstrap 5; the built UI primarily uses custom CSS rather than Bootstrap components.
+
+
+3. BACKEND (PYTHON / MACHINE LEARNING)
+--------------------------------------
+Technology: FastAPI (Python), deployed as serverless functions on Vercel.
+
+Dependencies (requirements.txt): fastapi, scikit-learn, pandas, python-multipart, supabase, joblib
+
+Entry point: `api/index.py`
+  • Loads the SVM model from `api/model/svm_model.pkl` using joblib
+  • Enables CORS so the Firebase-hosted frontend can call the API
+  • Registers API routers for upload, live traffic, reports, stats, and save
+
+Model training: `train_dummy_model.py`
+  • Trains a linear-kernel SVC on synthetic data (10 features, 100 samples)
+  • Saves the model to `api/model/svm_model.pkl`
+  • In production this is a demonstration model; a real deployment would train on labelled intrusion datasets (e.g. NSL-KDD, CICIDS)
+
+API endpoints:
+  • GET  /              — health check / welcome message
+  • POST /api/upload    — accepts CSV or PCAP/PCAPNG; extracts numeric features, runs SVM predict, returns Normal/Malicious labels and Allowed/Blocked actions
+  • GET  /api/live-traffic — generates a small batch of random feature vectors, runs the model, returns simulated live packets (for dashboard polling)
+  • GET  /api/stats?user_id=... — aggregates traffic_logs from Supabase for charts and metrics (pie, bar, confusion matrix style data)
+  • GET  /api/reports?user_id=... — returns up to 500 saved log rows for the logged-in user
+  • POST /api/save      — saves upload results to Supabase (requires user_id; wipes old user rows then inserts in batches)
+
+Upload processing (`api/upload.py`):
+  • CSV: reads numerical columns, uses first 10 features (pads with zeros if fewer)
+  • PCAP: mocked feature extraction (random features) for demo without heavy packet libraries
+  • Limits rows (5000) and response size (500 rows) for Vercel timeout and payload limits
+  • Does not auto-save to database; user explicitly saves via /api/save
+
+
+4. DATABASE & AUTH (SUPABASE)
+-----------------------------
+Supabase provides both authentication and PostgreSQL storage.
+
+Schema (`supabase.sql`):
+  • traffic_logs — id, timestamp, source_ip, dest_ip, protocol, prediction (Normal/Malicious), action (Allowed/Blocked), user_id
+  • profiles — linked to auth.users (first_name, last_name, email); created via trigger on signup
+
+Auth flow:
+  • Users register/login through auth HTML pages using @supabase/supabase-js
+  • Profile row is created automatically when a new user signs up
+  • Frontend stores user id in sessionStorage for per-user data isolation
+
+Backend connection (`api/db.py`):
+  • Python supabase client uses SUPABASE_URL and SUPABASE_KEY environment variables on Vercel
+  • Stats, reports, and save endpoints read/write the traffic_logs table filtered by user_id
+
+
+5. HOW DATA FLOWS (END-TO-END)
+------------------------------
+A) User authentication
+   Browser (Firebase) → Supabase Auth → session stored in browser → user_id available for API calls
+
+B) File upload & detection
+   1. User selects CSV/PCAP on Upload page
+   2. JavaScript sends file to Vercel: POST /api/upload (multipart)
+   3. FastAPI parses features → SVM model.predict() → JSON results (IPs, protocol, prediction, action)
+   4. Results shown in table on the page (not yet in database)
+
+C) Saving results
+   1. User clicks save (must be logged in)
+   2. POST /api/save with results + user_id
+   3. Backend deletes existing traffic_logs for that user, then batch-inserts new rows into Supabase
+
+D) Dashboard & reports
+   1. GET /api/stats?user_id=... → aggregates saved logs → charts on dashboard
+   2. GET /api/reports?user_id=... → table data for Reports page
+
+E) Live monitoring
+   1. Page polls GET /api/live-traffic periodically
+   2. Backend generates random features, runs SVM, returns fresh simulated packets (demo mode)
+
+
+6. HOSTING & DEPLOYMENT
+-----------------------
+The project uses a split deployment (frontend and backend on different platforms):
+
+Frontend — Firebase Hosting
+  • Project: cyber-shield-svm
+  • Config: firebase.json points `public` as the site root
+  • Deploy command: firebase deploy --only hosting
+  • Live URL (intended): https://cyber-shield-svm.web.app
+
+Backend — Vercel (serverless Python)
+  • Config: vercel.json rewrites /api/* routes to Python files in `api/`
+  • Production API base URL (in api.js): https://svmintrusionpreventionsystem.vercel.app
+  • Environment variables on Vercel: SUPABASE_URL, SUPABASE_KEY (and any other secrets)
+
+Database — Supabase cloud (hosted PostgreSQL + Auth)
+  • Tables created via SQL Editor using supabase.sql
+
+Local development:
+  • Python virtual environment (`venv/`) with dependencies from requirements.txt
+  • Backend can be run locally with uvicorn for testing; frontend can be opened as static files or via a simple local server
+
+
+7. ARCHITECTURE DIAGRAM (LOGICAL)
+----------------------------------
+  [User Browser]
+       |
+       |  (static HTML/CSS/JS)
+       v
+  [Firebase Hosting - public/]
+       |
+       |  HTTPS fetch (SmartGuardAPI)
+       v
+  [Vercel - FastAPI + SVM model]
+       |
+       |  supabase-py client
+       v
+  [Supabase - Auth + traffic_logs + profiles]
+
+  Auth pages also talk directly to Supabase from the browser for login/register.
+
+
+8. KEY POINTS FOR EXAMINER
+--------------------------
+  • This is a client–server web application, not a single monolithic app: static frontend + REST API + cloud database.
+  • Machine learning runs on the server (Python/scikit-learn), not in the browser — the model file is loaded once per serverless instance.
+  • Security idea: predictions label traffic; Malicious → Blocked, Normal → Allowed (IPS concept).
+  • Per-user data: stats and reports require user_id so users only see their own saved logs.
+  • Demonstration limits: dummy SVM, mocked PCAP parsing, simulated IPs for some fields, live traffic uses random features — suitable for prototype/demo; production would use real datasets, feature engineering, and packet capture libraries.
+  • CORS is configured on the API so the Firebase domain can call Vercel endpoints cross-origin.
+
+Project name in UI: SmartGuard IPS | SVM Intrusion Prevention System
+Repository folder: svm_intrusion_prevention_system

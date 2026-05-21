@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartGuard IPS - Verification Token</title>
+  <!-- Fallback to sans-serif if web fonts are blocked by the email client -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet">
+  <style>
+    /* Reset styles for email clients */
+    body,
+    table,
+    td,
+    div,
+    p,
+    a {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .wrapper {
+      width: 100%;
+      background-color: #050505;
+      padding: 40px 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #111111;
+      border: 1px solid #222222;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 30px 40px 10px;
+      text-align: center;
+    }
+
+    .header-logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .content {
+      padding: 20px 40px 40px;
+      text-align: center;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: #ffffff;
+    }
+
+    .description {
+      font-size: 15px;
+      color: #aaaaaa;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .token-box {
+      background-color: #0d0d0d;
+      border: 1px solid #333333;
+      border-radius: 8px;
+      padding: 24px;
+      margin: 0 auto 30px;
+      max-width: 300px;
+    }
+
+    .token {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 38px;
+      font-weight: 500;
+      letter-spacing: 12px;
+      color: #ffffff;
+      margin: 0;
+      /* Adjust right margin to visually center letter-spacing */
+      margin-right: -12px;
+    }
+
+    .footer {
+      border-top: 1px solid #222222;
+      background-color: #0a0a0a;
+      padding: 25px 40px;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 12px;
+      color: #555555;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper">
+    <table class="container" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+      <tr>
+        <td class="header">
+          <div class="header-logo">SmartGuard IPS</div>
+        </td>
+      </tr>
+      <tr>
+        <td class="content">
+          <h1 class="title">Verify your identity</h1>
+          <p class="description">
+            We received a request to sign in to your SmartGuard IPS account. Enter the following 6-character token to
+            complete the verification process.
+          </p>
+
+          <div class="token-box">
+            <!-- Supabase Dynamic Token Variable -->
+            <p class="token">{{.Token }}</p>
+          </div>
+
+          <p class="description" style="font-size: 13px; margin-bottom: 0;">
+            If you didn't request this email, you can safely ignore it. The token will expire shortly.
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td class="footer">
+          <p class="footer-text">
+            © 2024 SVM Intrusion Prevention System.<br>
+            This is an automated message, please do not reply.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+
+</html>

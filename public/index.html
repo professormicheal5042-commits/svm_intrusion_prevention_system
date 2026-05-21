@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="SmartGuard IPS — Machine Learning-Based Intrusion Prevention System using Support Vector Machine. Real-time network protection powered by AI." />
+  <title>SmartGuard IPS | SVM Intrusion Prevention System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-card: #111111;
+      --border: #222222;
+      --border-hi: #333333;
+      --text-pri: #ffffff;
+      --text-sec: #888888;
+      --text-ter: #555555;
+      --accent: #ffffff;
+      --dot: #2a2a2a;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-pri);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Grid background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, .03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 10, 10, .85);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      text-decoration: none;
+    }
+
+    .nav-logo-icon {
+      width: 32px;
+      height: 32px;
+      border: 1.5px solid var(--border-hi);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-logo-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .nav-logo-text {
+      font-size: .85rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: var(--text-pri);
+    }
+
+    .nav-logo-sub {
+      font-size: .72rem;
+      font-weight: 400;
+      color: var(--text-ter);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      font-size: .82rem;
+      font-weight: 400;
+      color: var(--text-sec);
+      text-decoration: none;
+      letter-spacing: .02em;
+      transition: color .2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-pri);
+    }
+
+    .nav-cta {
+      font-size: .82rem;
+      font-weight: 500;
+      padding: .5rem 1.2rem;
+      border: 1px solid var(--border-hi);
+      border-radius: 6px;
+      color: var(--text-pri) !important;
+      background: transparent;
+      transition: background .2s, border-color .2s !important;
+    }
+
+    .nav-cta:hover {
+      background: #1a1a1a !important;
+      border-color: #444 !important;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8rem 1.5rem 4rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .35rem .9rem;
+      border: 1px solid var(--border-hi);
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 500;
+      color: var(--text-sec);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 2.2rem;
+      animation: fadeUp .6s ease both;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff;
+      opacity: .6;
+    }
+
+    .hero-title {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -.03em;
+      animation: fadeUp .6s .1s ease both;
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #fff 40%, #666);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-tagline {
+      margin-top: 1.2rem;
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      font-weight: 400;
+      color: var(--text-sec);
+      letter-spacing: -.01em;
+      animation: fadeUp .6s .2s ease both;
+    }
+
+    .hero-desc {
+      margin-top: .75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+      color: var(--text-ter);
+      letter-spacing: .04em;
+      animation: fadeUp .6s .3s ease both;
+    }
+
+    .hero-desc span {
+      color: var(--text-sec);
+    }
+
+    .hero-actions {
+      margin-top: 2.8rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp .6s .4s ease both;
+    }
+
+    .btn-primary-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      padding: .85rem 2rem;
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: .88rem;
+      font-weight: 600;
+      letter-spacing: .01em;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity .2s, transform .2s;
+    }
+
+    .btn-primary-cta:hover {
+      opacity: .9;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary-cta svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      padding: .85rem 1.8rem;
+      background: transparent;
+      color: var(--text-sec);
+      border: 1px solid var(--border-hi);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: .88rem;
+      font-weight: 400;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color .2s, border-color .2s, transform .2s;
+    }
+
+    .btn-ghost:hover {
+      color: var(--text-pri);
+      border-color: #555;
+      transform: translateY(-1px);
+    }
+
+    /* ── Stats strip ── */
+    .stats-strip {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, .015);
+      animation: fadeUp .6s .55s ease both;
+    }
+
+    .stat-item {
+      flex: 1;
+      min-width: 180px;
+      padding: 1.6rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-right: 1px solid var(--border);
+    }
+
+    .stat-item:last-child {
+      border-right: none;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-pri);
+    }
+
+    .stat-label {
+      font-size: .72rem;
+      font-weight: 400;
+      color: var(--text-ter);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-top: .3rem;
+    }
+
+    /* ── Feature cards ── */
+    .features {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 5rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .features-label {
+      font-size: .72rem;
+      font-weight: 500;
+      color: var(--text-ter);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: .8rem;
+    }
+
+    .features-heading {
+      font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: -.02em;
+      margin-bottom: 3rem;
+    }
+
+    .features-heading span {
+      color: var(--text-sec);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card {
+      background: var(--bg-card);
+      padding: 2rem;
+      transition: background .2s;
+    }
+
+    .card:hover {
+      background: #161616;
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border-hi);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .card-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-sec);
+    }
+
+    .card-title {
+      font-size: .95rem;
+      font-weight: 600;
+      margin-bottom: .5rem;
+    }
+
+    .card-desc {
+      font-size: .82rem;
+      color: var(--text-sec);
+      line-height: 1.65;
+    }
+
+    /* ── About Developer ── */
+    .about-section {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .about-section h2 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 3rem;
+      letter-spacing: -.02em;
+    }
+
+    .bio-card {
+      display: flex;
+      align-items: center;
+      gap: 2.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .bio-image {
+      width: 180px;
+      height: 180px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 1px solid var(--border-hi);
+      flex-shrink: 0;
+    }
+
+    .bio-info {
+      flex: 1;
+    }
+
+    .bio-name {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: .3rem;
+      color: var(--text-pri);
+    }
+
+    .bio-tag {
+      font-size: .85rem;
+      color: #4ade80;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 1.2rem;
+    }
+
+    .bio-details {
+      list-style: none;
+      margin-bottom: 1.5rem;
+    }
+
+    .bio-details li {
+      font-size: .9rem;
+      color: var(--text-sec);
+      margin-bottom: .4rem;
+    }
+
+    .bio-details li span {
+      color: var(--text-pri);
+      font-weight: 500;
+      display: inline-block;
+      width: 95px;
+    }
+
+    .bio-desc {
+      font-size: .9rem;
+      color: var(--text-sec);
+      line-height: 1.6;
+      border-top: 1px solid var(--border);
+      padding-top: 1.2rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    footer p {
+      font-size: .75rem;
+      color: var(--text-ter);
+    }
+
+    .footer-mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      color: var(--text-ter);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── Glow orb ── */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      opacity: .12;
+    }
+
+    .orb-1 {
+      width: 500px;
+      height: 500px;
+      top: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffffff;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      nav {
+        padding: 1rem 1.2rem;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .stat-item {
+        min-width: 50%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .bio-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 2rem 1.5rem;
+      }
+      .bio-details li span {
+        width: auto;
+        margin-right: .5rem;
+      }
+
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      </div>
+      <div>
+        <div class="nav-logo-text">SmartGuard IPS</div>
+        <div class="nav-logo-sub">SVM Intrusion Prevention</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#about-dev">About Developer</a>
+      <a href="module/auth/login.html" class="nav-cta">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="orb orb-1"></div>
+
+    <div class="badge">
+      <div class="badge-dot"></div>
+      Academic Research Project — FinalYear
+    </div>
+
+    <h1 class="hero-title">
+      <span>SmartGuard IPS</span>
+    </h1>
+
+    <p class="hero-tagline">Stopping Cyber Threats Before They Strike</p>
+
+    <p class="hero-desc">
+      <span>Machine Learning Powered</span> &nbsp;•&nbsp; <span>Real-time Protection</span>
+    </p>
+
+    <div class="hero-actions">
+      <a href="module/auth/login.html" class="btn-primary-cta" id="btn-get-started">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+        Get Started
+      </a>
+    </div>
+  </section>
+
+  <!-- STATS STRIP -->
+  <div class="stats-strip">
+    <div class="stat-item">
+      <div class="stat-value">99.2%</div>
+      <div class="stat-label">Detection Accuracy</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">&lt;0.8%</div>
+      <div class="stat-label">False Positive Rate</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">5</div>
+      <div class="stat-label">Attack Categories</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">Real-time</div>
+      <div class="stat-label">Threat Response</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="features-label">Core Capabilities</div>
+    <h2 class="features-heading">Built for <span>intelligent</span> network defence</h2>
+
+    <div class="cards-grid">
+
+      <div class="card" id="card-svm">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
+          </svg>
+        </div>
+        <div class="card-title">SVM Classification Engine</div>
+        <div class="card-desc">Utilises Support Vector Machines with RBF, linear and polynomial kernels to maximise the
+          margin between normal and malicious traffic classes.</div>
+      </div>
+
+      <div class="card" id="card-live">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+        </div>
+        <div class="card-title">Live Traffic Monitoring</div>
+        <div class="card-desc">Real-time packet analysis streams each connection through the model, flagging and
+          blocking threats the instant they appear on the network.</div>
+      </div>
+
+      <div class="card" id="card-upload">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+        </div>
+        <div class="card-title">Dataset Upload & Analysis</div>
+        <div class="card-desc">Drag and drop your own .csv or .pcap file. The system extracts features automatically and
+          returns per-packet predictions with confidence scores.</div>
+      </div>
+
+      <div class="card" id="card-eval">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+        </div>
+        <div class="card-title">Model Evaluation</div>
+        <div class="card-desc">Interactive dashboards display Accuracy, Precision, Recall, F1-Score, ROC curves, and a
+          full confusion matrix for model transparency.</div>
+      </div>
+
+      <div class="card" id="card-reports">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+        </div>
+        <div class="card-title">Reports & Audit Logs</div>
+        <div class="card-desc">Full scan history with date, IP and attack-type filters. Export complete audit reports as
+          PDF or CSV for academic documentation.</div>
+      </div>
+
+      <div class="card" id="card-datasets">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3" />
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+          </svg>
+        </div>
+        <div class="card-title">Benchmark Datasets</div>
+        <div class="card-desc">Trained and validated on NSL-KDD, UNSW-NB15, and CICIDS2017/2018 — industry-standard
+          datasets covering DoS, Probe, U2R and R2L attacks.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ABOUT DEVELOPER -->
+  <section class="about-section" id="about-dev">
+    <h2>About Developer</h2>
+    <div class="bio-card">
+      <img src="assets/images/1000046124.jpg" alt="Gabriel Chioma" class="bio-image" />
+      <div class="bio-info">
+        <h3 class="bio-name">Gabriel Chioma</h3>
+        <p class="bio-tag">Final Year Student</p>
+        <ul class="bio-details">
+          <li><span>Department:</span> Computer Science</li>
+          <li><span>Faculty:</span> Computing</li>
+        </ul>
+        <p class="bio-desc">
+          Developer of the SmartGuard Intrusion Prevention System. This system was designed and developed as a final year academic research project, focusing on real-time network protection using Support Vector Machine algorithms.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2024 SVM Intrusion Prevention System &mdash; Final Year Research Project</p>
+    <span class="footer-mono">SmartGuard IPS v1.0 &nbsp;|&nbsp; Powered by FastAPI + Scikit-learn</span>
+  </footer>
+
+</body>
+
+</html>

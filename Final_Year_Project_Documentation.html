@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+    body { font-family: "Times New Roman", Times, serif; line-height: 1.6; color: #000; margin: 40px; font-size: 14px; }
+    h1, h2, h3 { text-align: left; color: #111; }
+    h1 { text-align: center; text-transform: uppercase; margin-bottom: 30px; font-size: 20px; }
+    h2 { font-size: 16px; text-transform: uppercase; margin-top: 30px; border-bottom: 1px solid #000; padding-bottom: 5px; }
+    h3 { font-size: 14px; text-decoration: underline; color: #2c3e50; }
+    p { text-align: justify; margin-bottom: 15px; }
+    ul { margin-bottom: 15px; }
+    .mermaid-container { text-align: center; margin: 30px 0; }
+    .module-box { border: 1px solid #ccc; padding: 20px; margin-bottom: 25px; border-radius: 5px; background-color: #fafafa; page-break-inside: avoid; }
+    .ui-desc { font-style: italic; color: #333; margin-bottom: 10px; }
+    .example-box { background: #eef7f9; border-left: 4px solid #3498db; padding: 10px; margin-top: 10px; font-family: Arial, sans-serif; font-size: 13px; }
+</style>
+<!-- Load Mermaid for real flowcharts -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+</script>
+</head>
+<body>
+
+<h1>SYSTEM ARCHITECTURE AND IMPLEMENTATION</h1>
+
+<h2>1. Introduction</h2>
+<p>This project, SmartGuard IPS (Support Vector Machine Intrusion Prevention System), is designed to classify network traffic into Normal or Malicious categories using Machine Learning. The system employs a modern 3-tier architecture separating the client interface, the machine learning server logic, and the persistent database storage. This ensures scalability, security, and real-time performance.</p>
+
+<h2>2. How the Components Work Together</h2>
+<p>The system is built on three major pillars which communicate seamlessly to provide real-time intrusion detection and prevention:</p>
+
+<h3>A. The Frontend (Client-Side)</h3>
+<p>Hosted on <b>Firebase Hosting</b>, the frontend is built with HTML5, CSS3, and Vanilla JavaScript. It serves as the user interface where network administrators interact with the system. It collects user inputs (such as uploading PCAP or CSV network files) and displays visual analytics using Chart.js. The frontend communicates with the backend via RESTful API calls using the Fetch API.</p>
+
+<h3>B. The Python Backend (Server-Side & Machine Learning)</h3>
+<p>Hosted on <b>Vercel as Serverless Functions</b>, the backend is built using <b>FastAPI</b> and Python. This is the brain of the system. It houses the pre-trained Support Vector Machine (SVM) model (built with Scikit-learn). When the frontend sends network data, the FastAPI server extracts the numerical features, feeds them into the SVM model, and immediately returns the prediction (Malicious/Blocked or Normal/Allowed) back to the user without freezing the user's browser.</p>
+
+<h3>C. The Database & Authentication (Supabase)</h3>
+<p>The system uses <b>Supabase</b> (a PostgreSQL cloud database) to handle two main things: User Authentication and Data Persistence. When a user creates an account, Supabase handles the security and issues a secure session token. When the Python backend detects network threats, the administrator can save these logs directly into the PostgreSQL `traffic_logs` table. The frontend later fetches these saved logs to generate historical reports and dashboard statistics.</p>
+
+<h2>3. System Flow Chart</h2>
+<p>The following flowchart visualizes the exact sequence of data flow, from user input down to persistent database storage and dashboard rendering.</p>
+
+<div class="mermaid-container">
+<div class="mermaid">
+graph TD
+    A[Network Administrator] -->|1. Uploads PCAP / CSV File| B(Frontend UI - Firebase)
+    B -->|2. POST /api/upload| C{Python API - Vercel}
+    C -->|3. Extracts Features| D[SVM Machine Learning Model]
+    D -->|4. Predicts Output| C
+    C -->|5. Returns JSON Array| B
+    B -->|6. Renders Data Table| B
+    B -->|7. Clicks 'Save to Database'| E[(Supabase PostgreSQL)]
+    E -->|8. Queries Historical Logs| F[Dashboard Analytics]
+</div>
+</div>
+
+<h2>4. Module by Module UI and Functionality Explanation</h2>
+
+<div class="module-box">
+    <h3>Module 1: Authentication Module</h3>
+    <p>This module manages user access control. It prevents unauthorized individuals from accessing sensitive network logs. It integrates directly with Supabase Auth to handle user registration, secure login, and session storage.</p>
+    <div class="ui-desc"><b>User Interface:</b> Features a sleek, dark-themed login and registration form asking for Email, Password, First Name, and Last Name. It includes validation messages and a secure password masking toggle.</div>
+    <div class="example-box"><b>Example Scenario:</b> A new security admin enters their email <code>admin@smartguard.com</code> and a secure password. The UI displays a loading spinner, communicates with Supabase, and redirects the user to the dashboard upon successful authentication.</div>
+</div>
+
+<div class="module-box">
+    <h3>Module 2: Upload and Detection Module</h3>
+    <p>This is the core functional module. It handles file parsing, data preprocessing, and SVM threat prediction by sending data to the Python backend.</p>
+    <div class="ui-desc"><b>User Interface:</b> Features a prominent drag-and-drop zone for <code>.csv</code> or <code>.pcap</code> files. Once a file is dropped, an animated progress pipeline appears (Parsing &rarr; Feature Extraction &rarr; SVM Classification). Below this, a dynamic tabular results grid renders the Source IP, Destination IP, Protocol, Duration, and Prediction.</div>
+    <div class="example-box"><b>Example Scenario:</b> The admin drops a <code>traffic_capture.pcap</code> file. The UI transitions through the progress steps smoothly. The table then dynamically populates with thousands of records, highlighting malicious threats with a stark red "Blocked" badge, and benign traffic with a green "Allowed" badge.</div>
+</div>
+
+<div class="module-box">
+    <h3>Module 3: Live Monitoring Module</h3>
+    <p>This module simulates a real-time network environment, polling the backend for incoming traffic streams.</p>
+    <div class="ui-desc"><b>User Interface:</b> Designed to mimic a live terminal feed. It contains a scrolling list of incoming network packets. The UI includes pulsing status dots and smooth slide-in animations for each new packet to indicate active, real-time monitoring.</div>
+    <div class="example-box"><b>Example Scenario:</b> The UI polls the API every few seconds, dynamically appending new packets to the top of the feed. The admin watches as a 'Normal' packet passes through, followed immediately by a 'DoS Attack' which visually triggers a red alert notification in the feed.</div>
+</div>
+
+<div class="module-box">
+    <h3>Module 4: Dashboard and Statistics Module</h3>
+    <p>Data visualization is crucial for summarizing network health. This module fetches aggregated historical data from the database.</p>
+    <div class="ui-desc"><b>User Interface:</b> A comprehensive analytics screen featuring interactive Chart.js visualizations. It contains a donut chart for traffic distribution (Normal vs. Malicious), a bar chart detailing specific attack signatures, and high-level metric cards (e.g., "Total Records Processed", "Threats Detected").</div>
+    <div class="example-box"><b>Example Scenario:</b> The admin logs in and immediately sees a dashboard summary indicating that 150 threats were blocked today. The interactive donut chart visually emphasizes that 5% of all incoming traffic was malicious.</div>
+</div>
+
+<div class="module-box">
+    <h3>Module 5: Reports and Evaluation Module</h3>
+    <p>This module serves compliance auditing and academic research purposes, displaying both raw logs and Machine Learning performance metrics.</p>
+    <div class="ui-desc"><b>User Interface (Reports):</b> A robust historical log table with advanced dropdown filters (Filter by Action, Filter by Type) and a button to "Export CSV".</div>
+    <div class="ui-desc"><b>User Interface (Evaluation):</b> Displays ML metrics in an academic layout, using animated circular progress bars to indicate Model Accuracy, Precision, Recall, and F1-Score.</div>
+    <div class="example-box"><b>Example Scenario:</b> The admin filters the reports table for 'Blocked' actions only, reviews the targeted intrusive IP addresses, and clicks 'Export CSV' to download a spreadsheet for their monthly security audit report.</div>
+</div>
+
+<h2>5. Machine Learning Model Training</h2>
+<p>The core intelligence of the system relies on a mathematical model that was trained in Python. The process is handled by a dedicated training script (<code>train_dummy_model.py</code>).</p>
+<ul>
+    <li><b>Data Generation:</b> The script utilizes the <code>scikit-learn</code> library (specifically <code>make_classification</code>) to generate synthetic dataset features. It creates 100 sample network packets, each defined by 10 specific numerical features (such as duration, byte size, etc.).</li>
+    <li><b>Algorithm Selection:</b> The system employs a <b>Support Vector Machine (SVM)</b> classifier. Specifically, an <code>SVC</code> (Support Vector Classifier) with a linear kernel is chosen. SVMs are highly effective in cybersecurity because they can plot multi-dimensional data and find the optimal "hyperplane" that cleanly separates benign traffic from malicious traffic.</li>
+    <li><b>Training the Model:</b> The synthetic data (features <code>X</code> and labels <code>y</code>) is fed into the algorithm using the <code>model.fit(X, y)</code> function. This process allows the algorithm to learn the underlying patterns that signify a cyber attack.</li>
+    <li><b>Model Serialization:</b> Once the model has successfully learned the patterns, it is serialized (saved) to a binary file named <code>svm_model.pkl</code> using the <code>joblib</code> library. This file is stored in the <code>api/model/</code> directory.</li>
+    <li><b>Real-Time Inference:</b> By saving the model to a <code>.pkl</code> file, the FastAPI backend does not need to retrain the model every time a user uploads a file. Instead, the backend simply loads the pre-trained model into memory and executes the <code>predict()</code> function instantly on new incoming data.</li>
+</ul>
+
+</body>
+</html>

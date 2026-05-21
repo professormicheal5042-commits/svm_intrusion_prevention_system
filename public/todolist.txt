@@ -1,0 +1,235 @@
+# 3-Day Implementation Plan: SVM Intrusion Prevention System Website
+
+## Project Stack
+- **Frontend:** HTML, CSS, JavaScript, Bootstrap 5
+- **Backend & ML:** FastAPI (Python), Scikit-learn (SVM Model)
+- **Database & Auth:** Supabase
+- **Deployment:** Firebase Hosting (Frontend), Vercel (FastAPI Backend)
+
+---
+
+## Day 1: UI Design & Frontend Development (HTML, CSS, JS)
+**Objective:** Build the user-friendly interface with a "Dark Professional" cyber security theme.
+
+- [x] **Project Setup**
+  - Initialize project structure. Recommended folder structure:
+    ```text
+    svm_intrusion_prevention_system/
+    ├── backend/                 # FastAPI Python backend
+    │   ├── main.py              # API entry point
+    │   ├── model/               # SVM model files (.pkl or .joblib)
+    │   ├── requirements.txt     # Python dependencies
+    │   └── utils/               # Helper functions (feature extraction, etc.)
+    └── public/                  # Frontend UI (Firebase hosting)
+        ├── index.html           # Dashboard (Home)
+        ├── live-monitoring.html
+        ├── upload.html
+        ├── evaluation.html
+        ├── reports.html
+        ├── about.html
+        ├── css/
+        │   └── style.css        # Global dark theme styles
+        ├── js/
+        │   ├── main.js          # Shared JS (sidebar, theme)
+        │   ├── dashboard.js     # Chart.js logic & API calls
+        │   └── api.js           # Centralized fetch calls to backend
+        └── assets/              # Images, logos, icons
+    ```
+  - Setup base HTML5 boilerplate and include Bootstrap 5 & Chart.js/Plotly.
+  - Create global CSS styles (Dark theme: `#121212` background, green/red/blue accents).
+- [x] **Dashboard (Home Page)**
+  - Build layout: Sidebar navigation & Top header.
+  - Create Key Metrics Cards (Total Packets, Attacks Detected, Threats Blocked, Model Accuracy).
+  - Design Chart placeholders (Pie Chart for Normal vs Malicious, Bar Chart for Attack Types).
+  - Build Recent Activity Log table and Quick Action buttons (Start/Stop).
+- [x] **Live Monitoring Page**
+  - Design real-time traffic analysis simulation UI.
+  - Build a live updating table (Timestamp, Source IP, Dest IP, Protocol, Prediction, Action).
+  - Implement alert notifications (red pop-ups for attacks) and traffic speed graph layout.
+- [x] **Upload & Analyze Page**
+  - Build drag-and-drop file upload area (`.csv`, `.pcap`, `.pcapng`).
+  - Create progress bar, feature extraction status indicators, and detailed results table.
+- [x] **Additional Pages**
+  - **Analysis & Results:** Layout for Confusion Matrix and classification report.
+  - **Model Evaluation:** Performance metrics layout (Accuracy, Precision, Recall, F1-Score, ROC Curve).
+  - **Reports & Logs:** Filter options and full history table for generating PDF/CSV.
+  - **About / Documentation:** Add project background, objectives, and technology explanations.
+- [x] **Polishing**
+  - Ensure fully responsive design for desktop, tablet, and mobile.
+  - Add hover effects and micro-animations for a premium feel.
+
+---
+
+## Day 2: Backend Design & ML Integration (FastAPI, Python, Supabase)
+**Objective:** Set up the API, database, and integrate the trained SVM machine learning model.
+
+- [ ] **FastAPI Setup**
+  - [x] Create `backend` (or `api`) directory and setup a Python virtual environment (`python -m venv venv`).
+  - [x] Install core dependencies (`pip install fastapi scikit-learn pandas python-multipart supabase`). *Note: `uvicorn` is only needed for local testing, as Vercel handles the server in production.*
+  - [x] Create `vercel.json` and `requirements.txt` to configure the app for Vercel deployment.
+  - [x] Create `main.py` (or `index.py`) and configure `CORSMiddleware` to allow requests from the Firebase frontend.
+- [ ] **Machine Learning Integration**
+  - [x] Place the trained SVM model file (e.g., `svm_model.pkl`) into `api/model/` and load it via `joblib`.
+  - [x] Build the `/api/upload` POST endpoint: read uploaded `.csv`/`.pcap` with Pandas, extract network features, run `model.predict()`, and return JSON classification results.
+  - [x] Build the `/api/live-traffic` endpoint: use `StreamingResponse` or WebSockets to stream real-time packet data and predictions to the frontend table.
+- [x] **Database & Supabase Integration**
+  - [x] Create a project on Supabase and obtain `SUPABASE_URL` and `SUPABASE_KEY`.
+  - [x] Create the `traffic_logs` table (columns: id, timestamp, source_ip, dest_ip, protocol, prediction, action) in the Supabase SQL Editor.
+  - [x] Setup the Python `supabase` client and write endpoints to insert detected threats and fetch logs for the Reports page.
+- [x] **Analytics Endpoints**
+  - [x] Build the `/api/stats` endpoint: query Supabase to aggregate total packets, attack types, and accuracy metrics.
+  - [x] Structure the JSON response to serve directly into the frontend Chart.js components (Pie Charts, Bar Charts, Confusion Matrix).
+
+---
+
+## Day 3: Integration, Testing & Deployment
+**Objective:** Connect the frontend to the backend APIs and deploy the application.
+
+- [x] **Frontend-Backend Integration (JavaScript)**
+  - [x] Use `fetch` API in JavaScript to connect frontend UI to FastAPI endpoints.
+  - [x] **Dashboard:** Fetch and render dynamic metrics and chart data.
+  - [x] **Live Monitoring:** Poll or use WebSockets to connect to the live traffic endpoint and update the UI table/charts in real-time.
+  - [x] **Upload & Analyze:** Wire up the file upload logic to send files to FastAPI, handle the loading state, and display prediction results.
+  - [x] **Reports:** Fetch historical logs from Supabase via FastAPI and populate the filterable table.
+- [ ] **Testing & Debugging**
+  - Test the full user flow: Uploading a file -> Processing -> Viewing Results.
+  - Ensure the SVM model predictions are accurately reflected in the UI and malicious traffic triggers "Blocked" actions.
+  - Test responsiveness and cross-browser compatibility.
+- [x] **Deployment**
+  - **Backend Deployment:** Deploy the FastAPI application and the SVM model to **Vercel**.
+  - **Frontend Deployment:** Deploy the HTML, CSS, and JS static files to **Firebase Hosting**.
+  - Update frontend JavaScript API base URLs to point to the live Vercel backend URL.
+- [ ] **Final Review & Documentation**
+  - Verify that the deployed system meets all aim and objectives outlined in the project documentation.
+  - Record a demo or take screenshots for the final project report.
+
+
+
+🗂️ Folder Structure (Vercel-Compatible)
+Vercel looks for an api/ folder at the root of your project. Your project will be structured like this:
+
+svm_intrusion_prevention_system/
+├── api/                        ← Vercel runs everything from here
+│   ├── index.py                ← FastAPI entry point (main.py renamed)
+│   ├── upload.py               ← /api/upload endpoint
+│   ├── live_traffic.py         ← /api/live-traffic endpoint
+│   ├── stats.py                ← /api/stats endpoint
+│   └── model/
+│       └── svm_model.pkl       ← Your trained SVM model file
+├── requirements.txt            ← Python dependencies for Vercel
+├── vercel.json                 ← Vercel config file
+└── public/                     ← Your Firebase frontend (already done ✅)
+⚙️ Step 1: FastAPI Setup
+1.1 — Create the api/ folder at the root (not inside public).
+
+1.2 — Create requirements.txt at the root. Vercel reads this to install your Python packages:
+
+fastapi
+scikit-learn
+pandas
+python-multipart
+supabase
+joblib
+1.3 — Create vercel.json at the root. This tells Vercel how to run your Python app:
+
+json
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.py" }
+  ]
+}
+1.4 — Create api/index.py — this is your FastAPI app with CORS:
+
+python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://cyber-shield-svm.web.app"],  # Your Firebase URL
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+Local testing only: Install uvicorn locally (pip install uvicorn) and run uvicorn api.index:app --reload. Vercel doesn't need this in production.
+
+🤖 Step 2: Machine Learning Integration
+2.1 — Train & Export your SVM model (if not done already):
+
+python
+import joblib
+from sklearn.svm import SVC
+# ... train your model ...
+joblib.dump(model, "api/model/svm_model.pkl")
+2.2 — Load the model in api/index.py once on startup:
+
+python
+import joblib, os
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "model", "svm_model.pkl")
+model = joblib.load(MODEL_PATH)
+2.3 — Build /api/upload in api/upload.py:
+
+Accept a .csv file via POST
+Read with pandas
+Select the right feature columns your SVM was trained on
+Run model.predict(features)
+Return JSON: { "results": [...] }
+2.4 — Build /api/live-traffic in api/live_traffic.py:
+
+Use FastAPI's StreamingResponse to send batches of mock/real packet data
+Each packet gets model.predict() run on it
+Returns a JSON stream the frontend polls every few seconds
+⚠️ Vercel limitation: WebSockets are not supported on Vercel. Use regular HTTP polling (setInterval on the frontend calling /api/live-traffic every 2–3 seconds) instead.
+
+🗄️ Step 3: Supabase Integration
+3.1 — Create a Supabase project at supabase.com → Get your SUPABASE_URL and SUPABASE_KEY.
+
+3.2 — Create the table in Supabase SQL Editor:
+
+sql
+CREATE TABLE traffic_logs (
+  id         BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  source_ip  TEXT,
+  dest_ip    TEXT,
+  protocol   TEXT,
+  prediction TEXT,   -- 'Normal' or 'Malicious'
+  action     TEXT    -- 'Allowed' or 'Blocked'
+);
+3.3 — Set Environment Variables on Vercel (never hardcode keys):
+
+Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+Add SUPABASE_URL and SUPABASE_KEY
+3.4 — Connect Python to Supabase in api/index.py:
+
+python
+import os
+from supabase import create_client
+supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
+📊 Step 4: Analytics Endpoint
+4.1 — Build /api/stats in api/stats.py:
+
+Query traffic_logs from Supabase
+Count total packets, malicious packets, attack type breakdown
+Return structured JSON ready for Chart.js:
+json
+{
+  "total": 1240,
+  "malicious": 87,
+  "normal": 1153,
+  "attack_types": {
+    "DoS": 42, "Probe": 21, "R2L": 14, "U2R": 10
+  }
+}
+🚀 Deployment to Vercel
+Once everything is coded:
+
+bash
+# 1. Install Vercel CLI
+npm install -g vercel
+# 2. Login
+vercel login
+# 3. Deploy from project root
+vercel --prod
+Vercel will auto-detect your api/ folder and deploy all Python functions as serverless endpoints at https://your-project.vercel.app/api/...
+
+Ready to start building? I can write the actual code files for any of these steps whenever you say go!

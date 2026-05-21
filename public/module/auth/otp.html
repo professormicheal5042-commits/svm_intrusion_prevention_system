@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Verify your SmartGuard IPS account with a 6-digit OTP" />
+  <title>Verify OTP | SmartGuard IPS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-card: #111111;
+      --border: #222222;
+      --border-hi: #333333;
+      --text-pri: #ffffff;
+      --text-sec: #888888;
+      --text-ter: #555555;
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-pri);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, .03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    nav {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 10, 10, .9);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      text-decoration: none
+    }
+
+    .nav-logo-icon {
+      width: 32px;
+      height: 32px;
+      border: 1.5px solid var(--border-hi);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-logo-icon svg {
+      width: 18px;
+      height: 18px
+    }
+
+    .nav-logo-text {
+      font-size: .85rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: var(--text-pri)
+    }
+
+    .nav-logo-sub {
+      font-size: .72rem;
+      color: var(--text-ter);
+      letter-spacing: .06em;
+      text-transform: uppercase
+    }
+
+    .nav-back {
+      font-size: .82rem;
+      color: var(--text-sec);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      transition: color .2s;
+    }
+
+    .nav-back:hover {
+      color: var(--text-pri)
+    }
+
+    .nav-back svg {
+      width: 14px;
+      height: 14px
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      opacity: .08;
+      width: 400px;
+      height: 400px;
+      top: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+    }
+
+    /* CARD */
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 2.2rem;
+      animation: fadeUp .5s ease both;
+      text-align: center;
+    }
+
+    .card-icon {
+      width: 56px;
+      height: 56px;
+      border: 1px solid var(--border-hi);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-icon::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, .06), transparent 70%);
+    }
+
+    .card-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--text-sec);
+      position: relative;
+      z-index: 1
+    }
+
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      margin-bottom: .5rem
+    }
+
+    .card-sub {
+      font-size: .82rem;
+      color: var(--text-sec);
+      line-height: 1.6;
+      margin-bottom: .5rem
+    }
+
+    .email-display {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+      color: var(--text-pri);
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid var(--border-hi);
+      border-radius: 6px;
+      padding: .3rem .75rem;
+      margin-bottom: 2rem;
+    }
+
+    /* OTP INPUTS */
+    .otp-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .75rem;
+      margin-bottom: .6rem;
+    }
+
+    .otp-input {
+      width: 52px;
+      height: 60px;
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-pri);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+      transition: border-color .2s, background .2s;
+      -moz-appearance: textfield;
+    }
+
+    .otp-input::-webkit-outer-spin-button,
+    .otp-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0
+    }
+
+    .otp-input:focus {
+      border-color: #555;
+      background: #141414
+    }
+
+    .otp-input.filled {
+      border-color: #444
+    }
+
+    .otp-input.invalid-otp {
+      border-color: #f87171;
+      animation: shake .3s ease
+    }
+
+    .otp-separator {
+      color: var(--text-ter);
+      font-size: 1.2rem;
+      font-weight: 300;
+      user-select: none
+    }
+
+    .err-msg {
+      font-size: .75rem;
+      color: #f87171;
+      margin-bottom: 1rem;
+      min-height: 1.1rem;
+      transition: opacity .2s;
+    }
+
+    /* TIMER */
+    .timer-row {
+      font-size: .78rem;
+      color: var(--text-ter);
+      margin-bottom: 1.6rem
+    }
+
+    .timer-count {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-sec);
+      font-weight: 500
+    }
+
+    .resend-btn {
+      background: none;
+      border: none;
+      color: var(--text-sec);
+      font-family: 'Inter', sans-serif;
+      font-size: .78rem;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color .2s;
+      display: none;
+    }
+
+    .resend-btn:hover {
+      color: var(--text-pri)
+    }
+
+    .resend-btn.visible {
+      display: inline
+    }
+
+    /* VERIFY BUTTON */
+    .btn-main {
+      width: 100%;
+      padding: .85rem;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .2s;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+    }
+
+    .btn-main:hover {
+      opacity: .9;
+      transform: translateY(-1px)
+    }
+
+    .btn-main:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none
+    }
+
+    .btn-main svg {
+      width: 16px;
+      height: 16px
+    }
+
+    .back-link {
+      font-size: .78rem;
+      color: var(--text-ter)
+    }
+
+    .back-link a {
+      color: var(--text-sec);
+      text-decoration: none;
+      transition: color .2s
+    }
+
+    .back-link a:hover {
+      color: var(--text-pri)
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 1.2rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .8rem;
+    }
+
+    footer p {
+      font-size: .72rem;
+      color: var(--text-ter)
+    }
+
+    .footer-mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .68rem;
+      color: var(--text-ter)
+    }
+
+    /* SUCCESS STATE */
+    .success-icon {
+      width: 56px;
+      height: 56px;
+      border: 1px solid #4ade8055;
+      border-radius: 14px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.4rem;
+      background: rgba(74, 222, 128, .05);
+    }
+
+    .success-icon svg {
+      width: 26px;
+      height: 26px;
+      stroke: #4ade80
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0)
+      }
+
+      25% {
+        transform: translateX(-6px)
+      }
+
+      75% {
+        transform: translateX(6px)
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <a href="../../index.html" class="nav-logo">
+      <div class="nav-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      </div>
+      <div>
+        <div class="nav-logo-text">SmartGuard IPS</div>
+        <div class="nav-logo-sub">SVM Intrusion Prevention</div>
+      </div>
+    </a>
+    <a href="login.html" class="nav-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M19 12H5M12 5l-7 7 7 7" />
+      </svg>
+      Back to Login
+    </a>
+  </nav>
+
+  <main>
+    <div class="orb"></div>
+    <div class="auth-card">
+
+      <!-- Default icon -->
+      <div class="card-icon" id="default-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path
+            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.9a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.5 16z" />
+        </svg>
+      </div>
+
+      <!-- Success icon (hidden by default) -->
+      <div class="success-icon" id="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+
+      <h1 class="card-title" id="card-title">Verify your identity</h1>
+      <p class="card-sub" id="card-sub">Enter the 6-digit verification code sent to</p>
+      <div class="email-display" id="email-display">—</div>
+
+      <div class="otp-row">
+        <input class="otp-input" type="number" maxlength="1" id="d1" inputmode="numeric" aria-label="Digit 1" />
+        <input class="otp-input" type="number" maxlength="1" id="d2" inputmode="numeric" aria-label="Digit 2" />
+        <input class="otp-input" type="number" maxlength="1" id="d3" inputmode="numeric" aria-label="Digit 3" />
+        <span class="otp-separator">—</span>
+        <input class="otp-input" type="number" maxlength="1" id="d4" inputmode="numeric" aria-label="Digit 4" />
+        <input class="otp-input" type="number" maxlength="1" id="d5" inputmode="numeric" aria-label="Digit 5" />
+        <input class="otp-input" type="number" maxlength="1" id="d6" inputmode="numeric" aria-label="Digit 6" />
+      </div>
+
+      <p class="err-msg" id="otp-err"></p>
+
+      <div class="timer-row" id="timer-row">
+        Code expires in <span class="timer-count" id="timer-count">10:00</span>
+        <button class="resend-btn" id="resend-btn" type="button">Resend code</button>
+      </div>
+
+      <button class="btn-main" id="btn-verify" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+        Verify &amp; Continue
+      </button>
+
+      <p class="back-link">Wrong account? <a href="login.html">Use a different email</a></p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2024 SVM Intrusion Prevention System — Final Year Research Project</p>
+    <span class="footer-mono">SmartGuard IPS v1.0</span>
+  </footer>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ── Supabase client ──────────────────────────────────────────────────────
+    const SUPABASE_URL = 'https://szkvhvzouqvugzunvfey.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6a3ZodnpvdXF2dWd6dW52ZmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNDY5NDEsImV4cCI6MjA5NDcyMjk0MX0.h73NOrJD8KA9tZjcaHCxHJIHjulqixAWdpCFeKa3Og8';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ── Show saved email ─────────────────────────────────────────────────────
+    const stored = sessionStorage.getItem('auth_email') || 'your email';
+    document.getElementById('email-display').textContent = stored;
+
+    // ── OTP input wiring ─────────────────────────────────────────────────────
+    const inputs = Array.from(document.querySelectorAll('.otp-input'));
+    const verifyBtn = document.getElementById('btn-verify');
+    const errMsg = document.getElementById('otp-err');
+
+    function checkComplete() {
+      verifyBtn.disabled = !inputs.every(i => i.value !== '');
+    }
+
+    inputs.forEach((input, idx) => {
+      input.addEventListener('input', function () {
+        if (this.value.length > 1) this.value = this.value.slice(-1);
+        if (this.value !== '') {
+          this.classList.add('filled');
+          if (idx < inputs.length - 1) inputs[idx + 1].focus();
+        } else {
+          this.classList.remove('filled');
+        }
+        checkComplete();
+      });
+
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Backspace' && this.value === '' && idx > 0) {
+          inputs[idx - 1].focus();
+          inputs[idx - 1].value = '';
+          inputs[idx - 1].classList.remove('filled');
+          checkComplete();
+        }
+        if (!/[0-9]/.test(e.key) && !['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          e.preventDefault();
+        }
+      });
+
+      input.addEventListener('paste', function (e) {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+        text.split('').slice(0, 6).forEach((ch, i) => {
+          if (inputs[i]) { inputs[i].value = ch; inputs[i].classList.add('filled'); }
+        });
+        inputs[Math.min(text.length, 5)].focus();
+        checkComplete();
+      });
+    });
+
+    inputs[0].focus();
+
+    // ── Countdown timer ──────────────────────────────────────────────────────
+    let seconds = 120;
+    const timerEl = document.getElementById('timer-count');
+    const resendBtn = document.getElementById('resend-btn');
+
+    function updateTimer() {
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      timerEl.textContent = `${m}:${s}`;
+      if (seconds <= 0) {
+        timerEl.textContent = '00:00';
+        timerEl.style.display = 'none';
+        resendBtn.classList.add('visible');
+        document.getElementById('timer-row').childNodes[0].textContent = 'Code expired. ';
+      } else {
+        seconds--;
+        setTimeout(updateTimer, 1000);
+      }
+    }
+    updateTimer();
+
+    // ── Resend OTP via Supabase ──────────────────────────────────────────────
+    resendBtn.addEventListener('click', async function () {
+      resendBtn.textContent = 'Sending…';
+      resendBtn.disabled = true;
+
+      const { error } = await sb.auth.resend({ type: 'signup', email: stored });
+
+      resendBtn.disabled = false;
+      resendBtn.textContent = 'Resend code';
+
+      if (error) { errMsg.textContent = error.message; return; }
+
+      // Reset UI
+      seconds = 120;
+      timerEl.style.display = '';
+      resendBtn.classList.remove('visible');
+      inputs.forEach(i => { i.value = ''; i.classList.remove('filled', 'invalid-otp'); });
+      verifyBtn.disabled = true;
+      errMsg.textContent = '';
+      inputs[0].focus();
+      document.getElementById('timer-row').childNodes[0].textContent = 'Code expires in ';
+      updateTimer();
+    });
+
+    // ── Verify OTP via Supabase ──────────────────────────────────────────────
+    verifyBtn.addEventListener('click', async function () {
+      errMsg.textContent = '';
+      inputs.forEach(i => i.classList.remove('invalid-otp'));
+      const otp = inputs.map(i => i.value).join('');
+
+      if (otp.length < 6) {
+        errMsg.textContent = 'Please enter all 6 digits.';
+        inputs.forEach(i => i.classList.add('invalid-otp'));
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = 'Verifying…';
+
+      const { data, error } = await sb.auth.verifyOtp({
+        email: stored,
+        token: otp,
+        type: 'signup',
+      });
+
+      if (error) {
+        verifyBtn.disabled = false;
+        verifyBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Verify &amp; Continue`;
+        errMsg.textContent = error.message.includes('expired')
+          ? 'Code expired. Please request a new one.'
+          : 'Invalid code. Please check and try again.';
+        inputs.forEach(i => i.classList.add('invalid-otp'));
+        return;
+      }
+      
+      // Save full user object to session storage
+      if (data && data.user) {
+        sessionStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      // ── Success state ────────────────────────────────────────────────────
+      document.getElementById('default-icon').style.display = 'none';
+      document.getElementById('success-icon').style.display = 'flex';
+      document.getElementById('card-title').textContent = 'Verified!';
+      document.getElementById('card-sub').textContent = 'Your identity has been confirmed. Redirecting to the dashboard…';
+      document.getElementById('email-display').style.display = 'none';
+      document.getElementById('timer-row').style.display = 'none';
+      verifyBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Verified`;
+      verifyBtn.style.background = '#4ade80';
+      verifyBtn.style.color = '#000';
+      verifyBtn.disabled = false;
+
+      setTimeout(() => { window.location.href = '../dashboard/index.html'; }, 1800);
+    });
+  </script>
+</body>
+
+</html>

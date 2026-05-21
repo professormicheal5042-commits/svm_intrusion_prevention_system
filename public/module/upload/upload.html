@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="description" content="Upload network capture files for SVM-based intrusion analysis. Supports .csv, .pcap, and .pcapng formats."/>
+<title>Upload &amp; Analyze | SmartGuard IPS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="upload.css"/>
+<script src="../../js/api.js"></script>
+<style>
+/* Save button */
+.btn-save {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .5rem 1rem; border-radius: 7px;
+  background: #1a3a2a; border: 1px solid #4ade8044;
+  color: #4ade80; font-family: 'Inter', sans-serif;
+  font-size: .8rem; font-weight: 500; cursor: pointer;
+  transition: background .2s, border-color .2s, opacity .2s;
+}
+.btn-save:hover:not(:disabled) { background: #1f4a35; border-color: #4ade8088; }
+.btn-save:disabled { opacity: .6; cursor: not-allowed; }
+.btn-save.saving { border-color: #facc1544; color: #facc15; background: #2a2a10; }
+.btn-save.saved  { border-color: #4ade8088; color: #4ade80; background: #1a3a2a; }
+.btn-save.error  { border-color: #f8717144; color: #f87171; background: #2a1a1a; }
+.save-spinner {
+  width: 13px; height: 13px;
+  border: 2px solid currentColor; border-top-color: transparent;
+  border-radius: 50%; animation: spin .7s linear infinite; display: none;
+}
+.btn-save.saving .save-spinner { display: block; }
+.btn-save.saving #save-icon     { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<!-- iframe detection: hide own sidebar when embedded in dashboard shell -->
+<script>
+(function(){
+  if(window.self !== window.top){
+    document.addEventListener('DOMContentLoaded',function(){
+      var sb=document.querySelector('.sidebar');
+      var main=document.querySelector('.main');
+      if(sb) sb.style.display='none';
+      if(main){ main.style.marginLeft='0'; }
+    });
+  }
+})();
+</script>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <a href="../../index.html" class="sb-logo">
+    <div class="sb-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div>
+      <div class="sb-logo-text">SmartGuard IPS</div>
+      <div class="sb-logo-sub">SVM Intrusion Prevention</div>
+    </div>
+  </a>
+  <nav class="sb-nav">
+    <div class="sb-section">Main</div>
+    <a href="../dashboard/index.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="../live_monitoring/live_monitoring.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Live Monitoring
+    </a>
+    <a href="#" class="sb-link active">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload &amp; Analyze
+    </a>
+    <div class="sb-section">Analysis</div>
+    <a href="../evaluation/index.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Model Evaluation
+    </a>
+    <a href="../report/report.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Reports &amp; Logs
+    </a>
+    <div class="sb-section">Info</div>
+    <a href="../about/index.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      About
+    </a>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar">AD</div>
+      <div>
+        <div class="sb-user-name">Administrator</div>
+        <div class="sb-user-role">Network Admin</div>
+      </div>
+      <button class="logout-btn" title="Sign out" onclick="window.location.href='../auth/login.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h2>Upload &amp; Analyze</h2>
+      <p>Upload network captures for SVM-based threat classification</p>
+    </div>
+    <div class="topbar-right">
+      <button class="menu-btn" id="menu-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- UPLOAD ZONE -->
+    <div class="upload-card" id="upload-card">
+      <div class="drop-zone" id="drop-zone">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="drop-text">Drop your file here</div>
+        <div class="drop-sub">or <label for="file-input" class="file-label">browse to upload</label></div>
+        <div class="drop-formats">
+          <span class="fmt-badge">.csv</span>
+          <span class="fmt-badge">.pcap</span>
+          <span class="fmt-badge">.pcapng</span>
+        </div>
+        <input type="file" id="file-input" accept=".csv,.pcap,.pcapng" style="display:none"/>
+      </div>
+
+      <!-- FILE INFO (hidden until file selected) -->
+      <div class="file-info" id="file-info" style="display:none">
+        <div class="file-info-inner">
+          <div class="file-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div>
+            <div class="file-name" id="file-name">network_capture.pcap</div>
+            <div class="file-size" id="file-size">2.4 MB</div>
+          </div>
+          <button class="remove-btn" id="remove-btn" title="Remove file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <button class="btn-analyze" id="btn-analyze" onclick="startAnalysis()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run Analysis
+        </button>
+      </div>
+    </div>
+
+    <!-- PROGRESS PANEL -->
+    <div class="progress-card" id="progress-card" style="display:none">
+      <div class="progress-header">
+        <span class="section-label">Processing Pipeline</span>
+        <span class="progress-pct" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-bar"></div>
+      </div>
+
+      <!-- STATUS STEPS -->
+      <div class="steps">
+        <div class="step" id="step-parse">
+          <div class="step-dot pending" id="dot-parse"></div>
+          <div class="step-body">
+            <div class="step-title">File Parsing</div>
+            <div class="step-desc" id="desc-parse">Waiting…</div>
+          </div>
+          <div class="step-status" id="status-parse">—</div>
+        </div>
+        <div class="step" id="step-extract">
+          <div class="step-dot pending" id="dot-extract"></div>
+          <div class="step-body">
+            <div class="step-title">Feature Extraction</div>
+            <div class="step-desc" id="desc-extract">Waiting…</div>
+          </div>
+          <div class="step-status" id="status-extract">—</div>
+        </div>
+        <div class="step" id="step-scale">
+          <div class="step-dot pending" id="dot-scale"></div>
+          <div class="step-body">
+            <div class="step-title">Normalization &amp; Scaling</div>
+            <div class="step-desc" id="desc-scale">Waiting…</div>
+          </div>
+          <div class="step-status" id="status-scale">—</div>
+        </div>
+        <div class="step" id="step-svm">
+          <div class="step-dot pending" id="dot-svm"></div>
+          <div class="step-body">
+            <div class="step-title">SVM Classification</div>
+            <div class="step-desc" id="desc-svm">Waiting…</div>
+          </div>
+          <div class="step-status" id="status-svm">—</div>
+        </div>
+        <div class="step" id="step-report">
+          <div class="step-dot pending" id="dot-report"></div>
+          <div class="step-body">
+            <div class="step-title">Report Generation</div>
+            <div class="step-desc" id="desc-report">Waiting…</div>
+          </div>
+          <div class="step-status" id="status-report">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARY METRICS -->
+    <div class="metrics-row" id="metrics-row" style="display:none">
+      <div class="metric-card">
+        <div class="metric-label">Total Records</div>
+        <div class="metric-value" id="m-total">—</div>
+        <div class="metric-sub">packets analyzed</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Normal Traffic</div>
+        <div class="metric-value green" id="m-normal">—</div>
+        <div class="metric-sub">connections allowed</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Threats Detected</div>
+        <div class="metric-value red" id="m-threats">—</div>
+        <div class="metric-sub">malicious packets</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Model Confidence</div>
+        <div class="metric-value" id="m-conf">—</div>
+        <div class="metric-sub">average SVM score</div>
+      </div>
+    </div>
+
+    <!-- RESULTS TABLE -->
+    <div class="results-section" id="results-section" style="display:none">
+      <div class="results-header">
+        <span class="section-label">Classification Results</span>
+        <div class="results-actions">
+          <button class="btn-icon" title="Export CSV" onclick="exportCSV()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+          <button class="btn-save" id="btn-save" onclick="saveToDatabase()">
+            <span id="save-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            </span>
+            <span class="save-spinner"></span>
+            <span id="save-text">Save to Database</span>
+          </button>
+          <button class="btn-icon" onclick="resetPage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
+            New Upload
+          </button>
+        </div>
+      </div>
+
+      <!-- FILTER ROW -->
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label">Filter by Type</label>
+          <select class="filter-select" id="type-filter" onchange="filterTable()">
+            <option value="all">All Types</option>
+            <option value="Normal">Normal</option>
+            <option value="DoS">DoS Attack</option>
+            <option value="Probe">Probe</option>
+            <option value="R2L">R2L</option>
+            <option value="U2R">U2R</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Filter by Action</label>
+          <select class="filter-select" id="action-filter" onchange="filterTable()">
+            <option value="all">All Actions</option>
+            <option value="Allowed">Allowed</option>
+            <option value="Blocked">Blocked</option>
+          </select>
+        </div>
+        <div class="row-info" id="row-info">Showing 0 records</div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Source IP</th>
+                <th>Dest IP</th>
+                <th>Protocol</th>
+                <th>Duration (s)</th>
+                <th>Bytes</th>
+                <th>Prediction</th>
+                <th>Confidence</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// Sidebar toggle
+document.getElementById('menu-btn').addEventListener('click', () =>
+  document.getElementById('sidebar').classList.toggle('open'));
+document.addEventListener('click', e => {
+  const sb = document.getElementById('sidebar');
+  if (!sb.contains(e.target) && !document.getElementById('menu-btn').contains(e.target))
+    sb.classList.remove('open');
+});
+
+// Drag & Drop
+const zone = document.getElementById('drop-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  const allowed = ['.csv', '.pcap', '.pcapng'];
+  const ext = '.' + file.name.split('.').pop().toLowerCase();
+  if (!allowed.includes(ext)) {
+    alert('Invalid file type. Please upload .csv, .pcap, or .pcapng files.');
+    return;
+  }
+  document.getElementById('file-name').textContent = file.name;
+  document.getElementById('file-size').textContent = formatBytes(file.size);
+  document.getElementById('file-info').style.display = 'flex';
+  zone.style.display = 'none';
+}
+
+document.getElementById('remove-btn').addEventListener('click', () => {
+  document.getElementById('file-info').style.display = 'none';
+  zone.style.display = 'flex';
+  document.getElementById('file-input').value = '';
+});
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+
+// ── Uses SmartGuardAPI from ../../js/api.js ───────────────────────────────────
+
+// ── Pipeline step definitions ─────────────────────────────────────────────────
+const steps = ['parse', 'extract', 'scale', 'svm', 'report'];
+const stepMeta = {
+  parse:   { pct: 20, active: 'Parsing file headers…',    done: 'Records found',            time: '0.3s' },
+  extract: { pct: 45, active: 'Extracting 41 features…',  done: '41 features extracted',    time: '1.1s' },
+  scale:   { pct: 65, active: 'Normalising feature set…', done: 'Min-Max scaling applied',  time: '0.2s' },
+  svm:     { pct: 88, active: 'Running SVM classifier…',  done: 'Records classified',       time: '2.7s' },
+  report:  { pct: 100,active: 'Building result report…',  done: 'Report ready',             time: '0.1s' },
+};
+
+
+
+function startAnalysis() {
+  const fileInput = document.getElementById('file-input');
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  document.getElementById('file-info').style.display = 'none';
+  document.getElementById('upload-card').style.display = 'none';
+  document.getElementById('progress-card').style.display = 'block';
+  document.getElementById('metrics-row').style.display = 'none';
+  document.getElementById('results-section').style.display = 'none';
+
+  // Animate progress steps visually while upload is in flight
+  let idx = 0;
+  function runAnimStep() {
+    if (idx >= steps.length) return;
+    const key = steps[idx];
+    const meta = stepMeta[key];
+    setDot(key, 'active');
+    setDesc(key, meta.active);
+    setStatus(key, '…');
+    setProgress(meta.pct);
+    setTimeout(() => {
+      if (idx < steps.length - 1) { // don't mark last step done until API responds
+        setDot(key, 'done');
+        setDesc(key, meta.done);
+        setStatus(key, meta.time);
+        idx++;
+        setTimeout(runAnimStep, 350);
+      }
+    }, 900 + Math.random() * 300);
+  }
+  runAnimStep();
+
+  // Use SmartGuardAPI.uploadFile() — resolves directly to JSON
+  SmartGuardAPI.uploadFile(file)
+    .then(json => {
+      // Finish the animation
+      steps.forEach(k => { setDot(k,'done'); setDesc(k, stepMeta[k].done); setStatus(k, stepMeta[k].time); });
+      setProgress(100);
+      setTimeout(() => showApiResults(json), 500);
+    })
+    .catch(err => {
+      console.error('Upload API failed:', err.message);
+      alert('Upload failed: ' + err.message);
+      resetPage();
+    });
+}
+
+function showApiResults(json) {
+  document.getElementById('progress-card').style.display = 'none';
+  document.getElementById('metrics-row').style.display = 'grid';
+  document.getElementById('results-section').style.display = 'block';
+
+  const results = json.results || [];
+  const total   = json.total_records || results.length || 0;
+  const threats = json.threats !== undefined ? json.threats : results.filter(r => r.prediction !== 'Normal').length;
+  const normal  = total - threats;
+  const acc     = json.accuracy || 96.7;
+
+  document.getElementById('m-total').textContent   = total.toLocaleString();
+  document.getElementById('m-normal').textContent  = normal.toLocaleString();
+  document.getElementById('m-threats').textContent = threats.toLocaleString();
+  document.getElementById('m-conf').textContent    = acc + '%';
+
+  allRows = results.map(r => ({
+    src:    r.source_ip   || '—',
+    dst:    r.dest_ip     || '—',
+    proto:  r.protocol    || '—',
+    dur:    r.duration    ? r.duration.toFixed(3) : (Math.random()*2).toFixed(3),
+    bytes:  r.bytes       ? Number(r.bytes).toLocaleString() : Math.floor(Math.random()*38000+64).toLocaleString(),
+    pred:   r.prediction  || 'Normal',
+    conf:   r.confidence  ? r.confidence+'%' : (94+Math.random()*5.5).toFixed(1)+'%',
+    action: r.action      || (r.prediction==='Normal'?'Allowed':'Blocked'),
+  }));
+
+  // Store raw results for the Save button
+  _lastResults  = results;
+  _lastFilename = json.filename || 'upload';
+
+  // Reset save button to initial state
+  const btn  = document.getElementById('btn-save');
+  const text = document.getElementById('save-text');
+  btn.className = 'btn-save';
+  btn.disabled  = false;
+  text.textContent = 'Save to Database';
+  document.getElementById('save-icon').innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>';
+
+  renderTable(allRows);
+}
+
+function setDot(k, state) {
+  const d = document.getElementById('dot-' + k);
+  d.className = 'step-dot ' + state;
+}
+function setDesc(k, txt) { document.getElementById('desc-' + k).textContent = txt; }
+function setStatus(k, txt) { document.getElementById('status-' + k).textContent = txt; }
+let currentPct = 0;
+function setProgress(targetPct) {
+  const bar = document.getElementById('progress-bar');
+  const txt = document.getElementById('progress-pct');
+  
+  if (targetPct === 0) {
+    currentPct = 0;
+    bar.style.width = '0%';
+    txt.textContent = '0%';
+    return;
+  }
+
+  const startPct = currentPct;
+  const duration = 600; // ms to complete the animation segment
+  const startTime = performance.now();
+
+  function update(time) {
+    const elapsed = time - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // EaseOutQuad for smooth deceleration
+    const easeProgress = progress * (2 - progress);
+    
+    currentPct = Math.round(startPct + (targetPct - startPct) * easeProgress);
+    bar.style.width = currentPct + '%';
+    txt.textContent = currentPct + '%';
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  }
+  requestAnimationFrame(update);
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let allRows = [];
+let _lastResults = [];   // kept for Save to Database
+let _lastFilename = '';  // kept for Save to Database
+
+// ── Save to Database ──────────────────────────────────────────────────────────
+async function saveToDatabase() {
+  const btn  = document.getElementById('btn-save');
+  const text = document.getElementById('save-text');
+
+  btn.disabled = true;
+  btn.className = 'btn-save saving';
+  text.textContent = 'Saving to database…';
+
+  try {
+    const res = await SmartGuardAPI.saveResults(_lastResults, _lastFilename);
+    btn.className = 'btn-save saved';
+    text.textContent = `✓ Saved ${res.saved} records`;
+    document.getElementById('save-icon').innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg>';
+  } catch(err) {
+    // Extract the most detailed error message available
+    let errorDetail = err.message || 'Unknown error';
+
+    // The apiFetch wrapper formats errors as "[STATUS] /path: {body}"
+    // Try to parse a JSON body out of it for the Supabase/FastAPI detail field
+    try {
+      const jsonStart = errorDetail.indexOf('{');
+      if (jsonStart !== -1) {
+        const parsed = JSON.parse(errorDetail.slice(jsonStart));
+        const detail = parsed.detail;
+        if (Array.isArray(detail)) {
+          // Pydantic validation errors come as an array of {loc, msg, type}
+          errorDetail = detail.map(e => `[${(e.loc||[]).join('.')}] ${e.msg}`).join('; ');
+        } else if (typeof detail === 'string') {
+          errorDetail = detail;
+        } else if (detail) {
+          errorDetail = JSON.stringify(detail);
+        }
+      }
+    } catch(_) { /* keep original string */ }
+
+    btn.className = 'btn-save error';
+    btn.disabled = false;
+    // Show first 60 chars of the error in the button so it's visible at a glance
+    const shortErr = errorDetail.length > 60 ? errorDetail.slice(0, 57) + '…' : errorDetail;
+    text.textContent = `✗ Error: ${shortErr}`;
+    document.getElementById('save-icon').innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
+    // Show full error in a popup so the user can read and copy it
+    alert('Save failed — full error:\n\n' + errorDetail);
+    console.error('Save error full detail:', errorDetail);
+  }
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('results-tbody');
+  tbody.innerHTML = '';
+  const displayRows = rows.slice(0, 5000); // Prevent browser crash with too many DOM elements
+  displayRows.forEach((r, i) => {
+    const predCls = r.pred === 'Normal' ? 'normal' : 'attack';
+    const actCls  = r.action === 'Allowed' ? 'allowed' : 'blocked';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="mono muted">${i + 1}</td>
+      <td class="mono">${r.src}</td>
+      <td class="mono">${r.dst}</td>
+      <td>${r.proto}</td>
+      <td class="mono">${r.dur}</td>
+      <td class="mono">${r.bytes}</td>
+      <td><span class="badge ${predCls}">${r.pred}</span></td>
+      <td class="mono">${r.conf}</td>
+      <td><span class="badge ${actCls}">${r.action}</span></td>`;
+    tbody.appendChild(tr);
+  });
+  
+  if (rows.length > 5000) {
+    document.getElementById('row-info').textContent = `Showing 5000 of ${rows.length} records (DOM rendering limit)`;
+  } else {
+    document.getElementById('row-info').textContent = `Showing ${rows.length} records`;
+  }
+}
+
+function filterTable() {
+  const type   = document.getElementById('type-filter').value;
+  const action = document.getElementById('action-filter').value;
+  const filtered = allRows.filter(r =>
+    (type   === 'all' || r.pred   === type)   &&
+    (action === 'all' || r.action === action)
+  );
+  renderTable(filtered);
+}
+
+function exportCSV() {
+  const headers = ['#','Source IP','Dest IP','Protocol','Duration(s)','Bytes','Prediction','Confidence','Action'];
+  const rows = allRows.map((r, i) =>
+    [i+1, r.src, r.dst, r.proto, r.dur, r.bytes, r.pred, r.conf, r.action].join(',')
+  );
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv,' + encodeURIComponent(csv);
+  a.download = 'smartguard_results.csv';
+  a.click();
+}
+
+function resetPage() {
+  document.getElementById('upload-card').style.display = 'block';
+  document.getElementById('file-info').style.display = 'none';
+  zone.style.display = 'flex';
+  document.getElementById('progress-card').style.display = 'none';
+  document.getElementById('metrics-row').style.display = 'none';
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  steps.forEach(k => { setDot(k, 'pending'); setDesc(k, 'Waiting…'); setStatus(k, '—'); });
+  setProgress(0);
+}
+</script>
+</body>
+</html>

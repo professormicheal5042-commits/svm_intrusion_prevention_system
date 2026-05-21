@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connecting… | SmartGuard IPS</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, .03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* Ambient glow */
+    .glow {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(140px);
+      pointer-events: none;
+      width: 500px;
+      height: 500px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(74, 222, 128, .12) 0%, transparent 70%);
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      animation: fadeUp .6s ease both;
+    }
+
+    /* Shield + ring loader */
+    .shield-ring {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 2rem;
+    }
+
+    .ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: #4ade80;
+      border-right-color: rgba(74, 222, 128, .3);
+      animation: spin 1.2s linear infinite;
+    }
+
+    .ring-inner {
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-bottom-color: rgba(74, 222, 128, .5);
+      animation: spin 1.8s linear infinite reverse;
+    }
+
+    .shield-box {
+      position: absolute;
+      inset: 16px;
+      border-radius: 50%;
+      background: rgba(74, 222, 128, .06);
+      border: 1px solid rgba(74, 222, 128, .2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .shield-box svg {
+      width: 28px;
+      height: 28px;
+      stroke: #4ade80
+    }
+
+    .status-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      margin-bottom: .5rem;
+      color: #fff;
+    }
+
+    .status-sub {
+      font-size: .85rem;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+
+    /* Progress dots */
+    .dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #333;
+      animation: dot-pulse 1.4s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) {
+      animation-delay: .2s
+    }
+
+    .dot:nth-child(3) {
+      animation-delay: .4s
+    }
+
+    /* Step bar */
+    .steps {
+      margin-top: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      text-align: left;
+      max-width: 260px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      font-size: .78rem;
+      color: #555;
+      transition: color .4s;
+    }
+
+    .step.active {
+      color: #888
+    }
+
+    .step.done {
+      color: #4ade80
+    }
+
+    .step-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all .4s;
+    }
+
+    .step.active .step-icon {
+      border-color: #555;
+      background: rgba(255, 255, 255, .04)
+    }
+
+    .step.done .step-icon {
+      border-color: #4ade80;
+      background: rgba(74, 222, 128, .1)
+    }
+
+    .step-icon svg {
+      width: 10px;
+      height: 10px
+    }
+
+    .error-box {
+      margin-top: 2rem;
+      padding: 1rem 1.5rem;
+      background: rgba(248, 113, 113, .08);
+      border: 1px solid rgba(248, 113, 113, .3);
+      border-radius: 10px;
+      color: #f87171;
+      font-size: .82rem;
+      display: none;
+    }
+
+    .retry-link {
+      display: inline-block;
+      margin-top: .75rem;
+      color: #f87171;
+      font-size: .78rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes pulse-glow {
+
+      0%,
+      100% {
+        opacity: .6
+      }
+
+      50% {
+        opacity: 1
+      }
+    }
+
+    @keyframes dot-pulse {
+
+      0%,
+      80%,
+      100% {
+        transform: scale(.6);
+        background: #333
+      }
+
+      40% {
+        transform: scale(1);
+        background: #4ade80
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="glow"></div>
+  <div class="card">
+    <div class="shield-ring">
+      <div class="ring"></div>
+      <div class="ring-inner"></div>
+      <div class="shield-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      </div>
+    </div>
+
+    <p class="status-title" id="status-title">Establishing Secure Session</p>
+    <p class="status-sub" id="status-sub">Please wait while we connect you…</p>
+
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <div class="steps" id="steps-list">
+      <div class="step active" id="step-auth">
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4" />
+          </svg>
+        </div>
+        <span>Verifying identity</span>
+      </div>
+      <div class="step" id="step-session">
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4" />
+          </svg>
+        </div>
+        <span>Securing session token</span>
+      </div>
+      <div class="step" id="step-dash">
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4" />
+          </svg>
+        </div>
+        <span>Loading dashboard</span>
+      </div>
+    </div>
+
+    <div class="error-box" id="error-box">
+      <span id="error-msg">Authentication failed. Please try again.</span><br />
+      <span class="retry-link" onclick="window.location.href='login.html'">← Return to Login</span>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://szkvhvzouqvugzunvfey.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6a3ZodnpvdXF2dWd6dW52ZmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNDY5NDEsImV4cCI6MjA5NDcyMjk0MX0.h73NOrJD8KA9tZjcaHCxHJIHjulqixAWdpCFeKa3Og8';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function markDone(id) {
+      const el = document.getElementById(id);
+      el.classList.remove('active');
+      el.classList.add('done');
+      el.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+    }
+    function markActive(id) {
+      document.getElementById(id).classList.add('active');
+    }
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function handleCallback() {
+      try {
+        markActive('step-auth');
+
+        // supabase-js v2 automatically reads access_token from the URL hash.
+        // Give it a tick to process before we call getSession().
+        await delay(800);
+
+        const { data, error } = await sb.auth.getSession();
+        const session = data?.session;
+
+        if (error || !session) {
+          throw new Error(error?.message || 'No active session found. Please sign in again.');
+        }
+
+        markDone('step-auth');
+        await delay(400);
+
+        // Step 2: cache user info
+        markActive('step-session');
+        // ── Save full user object so user_id is available throughout the app ──
+        sessionStorage.setItem('user', JSON.stringify(session.user));
+        sessionStorage.setItem('auth_email', session.user.email);
+        await delay(600);
+        markDone('step-session');
+        await delay(400);
+
+        // Step 3: redirect
+        markActive('step-dash');
+        document.getElementById('status-title').textContent = 'All Systems Green';
+        document.getElementById('status-sub').textContent = 'Redirecting to your dashboard…';
+        await delay(700);
+        markDone('step-dash');
+        await delay(400);
+
+        // Use absolute path so it works from any nested page
+        window.location.replace('/module/dashboard/index.html');
+
+      } catch (err) {
+        document.getElementById('error-box').style.display = 'block';
+        document.getElementById('error-msg').textContent = err.message;
+        document.getElementById('status-title').textContent = 'Connection Failed';
+        document.getElementById('status-sub').textContent = 'Unable to establish secure session.';
+      }
+    }
+
+    handleCallback();
+  </script>
+</body>
+
+</html>

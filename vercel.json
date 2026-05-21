@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/api/upload",       "destination": "/api/upload.py" },
+    { "source": "/api/live-traffic", "destination": "/api/live_traffic.py" },
+    { "source": "/api/reports",      "destination": "/api/reports.py" },
+    { "source": "/api/stats",        "destination": "/api/stats.py" },
+    { "source": "/api/save",         "destination": "/api/index.py" },
+    { "source": "/api/(.*)",         "destination": "/api/index.py" }
+  ]
+}

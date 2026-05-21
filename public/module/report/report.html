@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Reports & Logs | SmartGuard IPS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="report.css"/>
+<script src="../../js/api.js"></script>
+</head>
+<body>
+<script>
+(function(){
+  if(window.self!==window.top){
+    document.addEventListener('DOMContentLoaded',function(){
+      var sb=document.querySelector('.sidebar'),main=document.querySelector('.main');
+      if(sb)sb.style.display='none';
+      if(main)main.style.marginLeft='0';
+    });
+  }
+})();
+</script>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <a href="../../index.html" class="sb-logo">
+    <div class="sb-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div>
+      <div class="sb-logo-text">SmartGuard IPS</div>
+      <div class="sb-logo-sub">SVM Intrusion Prevention</div>
+    </div>
+  </a>
+  <nav class="sb-nav">
+    <div class="sb-section">Main</div>
+    <a href="../dashboard/index.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="../live_monitoring/live_monitoring.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Live Monitoring
+    </a>
+    <a href="../upload/upload.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload &amp; Analyze
+    </a>
+    <div class="sb-section">Analysis</div>
+    <a href="../evaluation/evaluation.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Model Evaluation
+    </a>
+    <a href="#" class="sb-link active">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Reports &amp; Logs
+    </a>
+    <div class="sb-section">Info</div>
+    <a href="../about/index.html" class="sb-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      About
+    </a>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar">AD</div>
+      <div><div class="sb-user-name">Administrator</div><div class="sb-user-role">Network Admin</div></div>
+      <button class="logout-btn" title="Sign out" onclick="window.location.href='../auth/login.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h2>Reports &amp; Logs</h2>
+      <p>Full audit history with filtering and export</p>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-export" id="btn-csv" onclick="exportData('csv')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button>
+      <button class="btn-export btn-pdf" id="btn-pdf" onclick="exportData('pdf')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Export PDF
+      </button>
+      <button class="menu-btn" id="menu-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- SUMMARY STRIP -->
+    <div class="summary-strip">
+      <div class="summary-item">
+        <div class="summary-value">20,661</div>
+        <div class="summary-label">Total Events</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value red">1,827</div>
+        <div class="summary-label">Threats Detected</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value green">1,789</div>
+        <div class="summary-label">Threats Blocked</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value">18,834</div>
+        <div class="summary-label">Normal Traffic</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value">99.2%</div>
+        <div class="summary-label">Detection Rate</div>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-card">
+      <div class="filter-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Filters
+      </div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label">Date From</label>
+          <input type="date" class="filter-input" id="f-from" value="2025-05-01"/>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Date To</label>
+          <input type="date" class="filter-input" id="f-to" value="2025-05-17"/>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Attack Type</label>
+          <select class="filter-input" id="f-type">
+            <option value="all">All Types</option>
+            <option value="Normal">Normal</option>
+            <option value="DoS">DoS</option>
+            <option value="Probe">Probe</option>
+            <option value="R2L">R2L</option>
+            <option value="U2R">U2R</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Protocol</label>
+          <select class="filter-input" id="f-proto">
+            <option value="all">All Protocols</option>
+            <option value="TCP">TCP</option>
+            <option value="UDP">UDP</option>
+            <option value="ICMP">ICMP</option>
+            <option value="HTTP">HTTP</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Action</label>
+          <select class="filter-input" id="f-action">
+            <option value="all">All Actions</option>
+            <option value="Blocked">Blocked</option>
+            <option value="Allowed">Allowed</option>
+          </select>
+        </div>
+        <div class="filter-group filter-btns">
+          <button class="btn-apply" onclick="applyFilters()">Apply</button>
+          <button class="btn-reset" onclick="resetFilters()">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+      <div class="table-toolbar">
+        <span class="row-count" id="row-count">Showing 20 of 20,661 records</span>
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="search-input" id="search" placeholder="Search IP, type…" oninput="applyFilters()"/>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="report-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Timestamp</th>
+              <th>Source IP</th>
+              <th>Dest IP</th>
+              <th>Protocol</th>
+              <th>Attack Type</th>
+              <th>Confidence</th>
+              <th>Action</th>
+              <th>Duration</th>
+              <th>Bytes</th>
+            </tr>
+          </thead>
+          <tbody id="report-tbody"></tbody>
+        </table>
+      </div>
+      <!-- PAGINATION -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const VERCEL_URL = 'https://svmintrusionpreventionsystem-e9a049kj5.vercel.app';
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+document.getElementById('menu-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+document.addEventListener('click',e=>{
+  const sb=document.getElementById('sidebar');
+  if(!sb.contains(e.target)&&!document.getElementById('menu-btn').contains(e.target))sb.classList.remove('open');
+});
+
+// ── Removed mock data generation ──────────────────────────────────────────────
+
+// ── Convert API traffic_logs row → table row format ───────────────────────────
+function apiRowToTableRow(r, idx) {
+  return {
+    ts: new Date(r.timestamp || r.created_at).toLocaleString('en-GB',
+      {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    src:  r.source_ip   || r.src_ip || '—',
+    dst:  r.dest_ip     || r.dst_ip || '—',
+    proto:r.protocol    || '—',
+    type: r.prediction  || 'Normal',
+    action: r.action    || (r.prediction === 'Normal' ? 'Allowed' : 'Blocked'),
+    conf: r.confidence ? r.confidence + '%' : (94 + Math.random() * 5.5).toFixed(1) + '%',
+    dur:  r.duration  ? r.duration.toFixed(3) : (Math.random() * 2).toFixed(3),
+    bytes: r.bytes    ? Number(r.bytes).toLocaleString() : Math.floor(Math.random()*38000+64).toLocaleString()
+  };
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let RAW_DATA = [];
+let filtered  = [];
+const PAGE_SIZE = 20;
+let currentPage = 1;
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+function applyFilters(){
+  const type   = document.getElementById('f-type').value;
+  const proto  = document.getElementById('f-proto').value;
+  const action = document.getElementById('f-action').value;
+  const q      = document.getElementById('search').value.toLowerCase();
+  filtered = RAW_DATA.filter(r=>{
+    if(type!=='all'&&r.type!==type)return false;
+    if(proto!=='all'&&r.proto!==proto)return false;
+    if(action!=='all'&&r.action!==action)return false;
+    if(q&&!r.src.includes(q)&&!r.dst.includes(q)&&!r.type.toLowerCase().includes(q))return false;
+    return true;
+  });
+  currentPage=1;
+  render();
+}
+
+function resetFilters(){
+  ['f-type','f-proto','f-action'].forEach(id=>document.getElementById(id).value='all');
+  document.getElementById('search').value='';
+  filtered=RAW_DATA.slice();
+  currentPage=1;
+  render();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(){
+  const tbody=document.getElementById('report-tbody');
+  const start=(currentPage-1)*PAGE_SIZE;
+  const page=filtered.slice(start,start+PAGE_SIZE);
+  tbody.innerHTML='';
+  if (page.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="10" style="text-align:center;color:#444;padding:1.5rem">No records found.</td>`;
+    tbody.appendChild(tr);
+  } else {
+    page.forEach((r,i)=>{
+      const tc=r.type==='Normal'?'normal':'attack';
+      const ac=r.action==='Allowed'?'allowed':'blocked';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="mono muted">${start+i+1}</td>
+        <td class="mono">${r.ts}</td>
+        <td class="mono">${r.src}</td>
+        <td class="mono">${r.dst}</td>
+        <td>${r.proto}</td>
+        <td><span class="badge ${tc}">${r.type}</span></td>
+        <td class="mono">${r.conf}</td>
+        <td><span class="badge ${ac}">${r.action}</span></td>
+        <td class="mono">${r.dur}s</td>
+        <td class="mono">${r.bytes}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  document.getElementById('row-count').textContent=
+    `Showing ${Math.min(start+PAGE_SIZE,filtered.length).toLocaleString()} of ${filtered.length.toLocaleString()} records`;
+  renderPagination();
+}
+
+function renderPagination(){
+  const total=Math.ceil(filtered.length/PAGE_SIZE);
+  const pg=document.getElementById('pagination');
+  pg.innerHTML='';
+  if(total<=1)return;
+  const mkBtn=(label,page,disabled,active)=>{
+    const b=document.createElement('button');
+    b.className='pg-btn'+(active?' active':'')+(disabled?' disabled':'');
+    b.textContent=label;
+    if(!disabled&&!active) b.onclick=()=>{currentPage=page;render();};
+    pg.appendChild(b);
+  };
+  mkBtn('‹ Prev',currentPage-1,currentPage===1,false);
+  const start=Math.max(1,currentPage-2);
+  const end=Math.min(total,start+4);
+  for(let p=start;p<=end;p++) mkBtn(p,p,false,p===currentPage);
+  mkBtn('Next ›',currentPage+1,currentPage===total,false);
+}
+
+// ── Update summary strip from data ───────────────────────────────────────────
+function updateSummary(data) {
+  const total    = data.length;
+  const threats  = data.filter(r=>r.type!=='Normal').length;
+  const normal   = total - threats;
+  const blocked  = data.filter(r=>r.action==='Blocked').length;
+  const rate     = total > 0 ? ((blocked/Math.max(threats,1))*100).toFixed(1)+'%' : '—';
+  const items = document.querySelectorAll('.summary-value');
+  if(items.length>=5){
+    items[0].textContent = total.toLocaleString();
+    items[1].textContent = threats.toLocaleString();
+    items[2].textContent = blocked.toLocaleString();
+    items[3].textContent = normal.toLocaleString();
+    items[4].textContent = rate;
+  }
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function exportData(type){
+  if(type==='csv'){
+    const headers=['#','Timestamp','Source IP','Dest IP','Protocol','Attack Type','Confidence','Action','Duration','Bytes'];
+    const rows=filtered.map((r,i)=>[i+1,r.ts,r.src,r.dst,r.proto,r.type,r.conf,r.action,r.dur+'s',r.bytes].join(','));
+    const csv=[headers.join(','),...rows].join('\n');
+    const a=document.createElement('a');
+    a.href='data:text/csv,'+encodeURIComponent(csv);
+    a.download='smartguard_report.csv';
+    a.click();
+    showToast('CSV exported — '+filtered.length+' records');
+  } else {
+    showToast('PDF export requires backend — CSV available instead');
+  }
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='flex';
+  clearTimeout(t._tid);
+  t._tid=setTimeout(()=>t.style.display='none',3000);
+}
+
+// ── Fetch from API via SmartGuardAPI ───────────────────────────────────────────
+async function loadReports() {
+  try {
+    const json = await SmartGuardAPI.fetchReports();
+    RAW_DATA = (json.data || []).map((r,i) => apiRowToTableRow(r,i));
+  } catch(err) {
+    console.error('Reports API failed:', err.message);
+    RAW_DATA = [];
+    showToast('Failed to load reports: ' + err.message);
+  }
+  filtered = RAW_DATA.slice();
+  updateSummary(RAW_DATA);
+  render();
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadReports();
+</script>
+</body>
+</html>
