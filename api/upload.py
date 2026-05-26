@@ -1,13 +1,16 @@
 import pandas as pd
 import io
 import numpy as np
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
 @router.post("/api/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(
+    file: UploadFile = File(...),
+    blocked_website: str = Form(None)
+):
     # Import model locally to avoid circular import
     from api.index import svm_model
     
@@ -65,6 +68,12 @@ async def upload_file(file: UploadFile = File(...)):
             src_ip = f"192.168.1.{np.random.randint(1, 255)}"
             dest_ip = f"10.0.0.{np.random.randint(1, 255)}"
             protocol = np.random.choice(["TCP", "UDP", "HTTP", "ICMP"])
+            
+            # Force block traffic to the specified website
+            if blocked_website and (np.random.random() < 0.15 or i == 0):
+                dest_ip = blocked_website
+                status = "Malicious"
+                action = "Blocked"
             
             results.append({
                 "id": i + 1,

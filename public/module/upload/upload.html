@@ -151,7 +151,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
-        <button class="btn-analyze" id="btn-analyze" onclick="startAnalysis()">
+        <div style="margin-top: 15px; width: 100%; text-align: left;">
+          <label for="blocked-website" style="font-size: 0.85rem; color: #a1a1aa; margin-bottom: 5px; display: block;">Website/IP to block traffic from (Optional):</label>
+          <input type="text" id="blocked-website" placeholder="e.g. example.com or 192.168.1.100" style="width: 100%; padding: 8px 12px; border-radius: 6px; background: #1a1a1a; border: 1px solid #333; color: #fff; font-family: inherit; font-size: 0.9rem;">
+        </div>
+        <button class="btn-analyze" id="btn-analyze" onclick="startAnalysis()" style="margin-top: 15px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           Run Analysis
         </button>
@@ -349,6 +353,7 @@ document.getElementById('remove-btn').addEventListener('click', () => {
   document.getElementById('file-info').style.display = 'none';
   zone.style.display = 'flex';
   document.getElementById('file-input').value = '';
+  document.getElementById('blocked-website').value = '';
 });
 
 function formatBytes(b) {
@@ -404,13 +409,19 @@ function startAnalysis() {
   }
   runAnimStep();
 
+  const blockedWebsite = document.getElementById('blocked-website').value.trim();
+
   // Use SmartGuardAPI.uploadFile() — resolves directly to JSON
-  SmartGuardAPI.uploadFile(file)
+  SmartGuardAPI.uploadFile(file, blockedWebsite)
     .then(json => {
       // Finish the animation
       steps.forEach(k => { setDot(k,'done'); setDesc(k, stepMeta[k].done); setStatus(k, stepMeta[k].time); });
       setProgress(100);
-      setTimeout(() => showApiResults(json), 500);
+      setTimeout(() => {
+        showApiResults(json);
+        // Automatically save to the database for real-time update
+        saveToDatabase();
+      }, 500);
     })
     .catch(err => {
       console.error('Upload API failed:', err.message);
@@ -615,6 +626,9 @@ function resetPage() {
   document.getElementById('metrics-row').style.display = 'none';
   document.getElementById('results-section').style.display = 'none';
   document.getElementById('file-input').value = '';
+  if (document.getElementById('blocked-website')) {
+    document.getElementById('blocked-website').value = '';
+  }
   steps.forEach(k => { setDot(k, 'pending'); setDesc(k, 'Waiting…'); setStatus(k, '—'); });
   setProgress(0);
 }

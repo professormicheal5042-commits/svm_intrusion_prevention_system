@@ -82,9 +82,12 @@
    * @param {File} file  - a .csv, .pcap, or .pcapng File object
    * Returns: { status, total_records, threats, accuracy, results: [...] }
    */
-  async function uploadFile(file) {
+  async function uploadFile(file, blockedWebsite) {
     const formData = new FormData();
     formData.append('file', file);
+    if (blockedWebsite) {
+      formData.append('blocked_website', blockedWebsite);
+    }
     // Do NOT set Content-Type header — browser adds it with the multipart boundary
     return apiFetch('/api/upload', { method: 'POST', body: formData, headers: {} });
   }
