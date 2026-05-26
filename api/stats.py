@@ -20,7 +20,7 @@ async def get_stats(user_id: str = None):
 
         # Fetch logs from Supabase
         query = supabase.table("traffic_logs").select("*").eq("user_id", user_id)
-        response = query.limit(1000).execute()
+        response = query.limit(100000).execute()
         logs = response.data
         
         total_packets = len(logs)

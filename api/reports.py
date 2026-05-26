@@ -12,7 +12,7 @@ async def get_reports(user_id: str = None):
 
         from api.db import supabase
         query = supabase.table("traffic_logs").select("*").order("timestamp", desc=True).eq("user_id", user_id)
-        response = query.limit(500).execute()
+        response = query.limit(100000).execute()
         
         return JSONResponse(content={
             "status": "success",
